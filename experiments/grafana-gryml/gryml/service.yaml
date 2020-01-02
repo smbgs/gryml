@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: "" #{chart.name}
+  labels: {} #[append]{chart.labels}[append]{service.labels}
+  namespace: "" #{grafana.namespace}
+  annotations: {} #[merge]{service.annotations}
+
+spec:
+  type: ClusterIP #{service.type}
+  clusterIP: "" #[if]{service.clusterIP}
+
+  loadBalancerIP: "" #[if]{service.loadBalancerIP}
+  loadBalancerSourceRanges: [] #[if]{service.loadBalancerSourceRanges}
+  externalIPs: []  #[if]{service.externalIPs}
+
+  ports:
+    - name: portName #{service.portName}
+      port: 0000 #{service.port}
+      protocol: TCP
+      targetPort: 0000 #{service.targetPort}
+      nodePort: 0000 #[if service.nodePort and service.type == "NodePort"]{service.nodePort}
+
+  selector:
+    app: app #{chart.name}
+    release: release #{chart.release}

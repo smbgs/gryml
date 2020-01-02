@@ -55,6 +55,9 @@ podDisruptionBudget:
 admin:
   existingSecret: ""
 
+envRenderSecret:
+  key: value
+
 $gryml-sources:
   - gryml/clusterrole.yaml            #[if rbac.create and not rbac.namespaced]
   - gryml/clusterrolebinding.yaml     #[if rbac.create and not rbac.namespaced]
@@ -75,4 +78,10 @@ $gryml-sources:
   - gryml/role.yaml                   #[if rbac.create]
   - gryml/rolebinding.yaml            #[if rbac.create]
 
-  - gryml/rolebinding.yaml            #[if not admin.existingSecret]
+  - gryml/secret.yaml                 #[if not admin.existingSecret]
+  - gryml/secret-env.yaml             #[if not envRenderSecret]
+
+  - gryml/service.yaml
+  - serviceaccount.yaml               #[if not serviceAccount.create]
+
+  - statefulset.yaml                  #[if persistence.enabled and (not persistence.existingClaim) and (persistence.type == "statefulset")]
