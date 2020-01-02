@@ -1,0 +1,14 @@
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: "" #{chart.name}
+  labels: {} #[append]{chart.labels}[append]{ingress.labels}
+  annotations: {} #[append]{chart.annotations}
+  namespace: "" #{grafana.namespace}
+spec:
+  minAvailable: 1 #[if]{podDisruptionBudget.minAvailable}
+  maxUnavailable: 1 #[if]{podDisruptionBudget.maxUnavailable}
+  selector:
+    matchLabels:
+      app: app #{app.name}
+      release: 1 #{chart.release}

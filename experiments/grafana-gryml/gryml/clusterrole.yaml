@@ -2,8 +2,8 @@ kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: grafana-role #{chart.name}
-  labels: #[append]{chart.labels}
-  annotations: #[append]{chart.annotations}
+  labels: {} #[append]{chart.labels}
+  annotations: {} #[append]{chart.annotations}
 
 rules: #[append]{rbac.extraClusterRoleRules}
   #TODO: list pre item tag

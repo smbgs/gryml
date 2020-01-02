@@ -2,11 +2,11 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: grafana-role #{chart.name}
-  labels: #[append]{chart.labels}
-  annotations: #[append]{chart.annotations}
-  namespace: #{grafana.namespace}
+  labels: {} #[append]{chart.labels}
+  annotations: {} #[append]{chart.annotations}
+  namespace: "" #{grafana.namespace}
 data:
-  provider.yaml: #{sidecar.dashboards.provider|template(yaml)}
+  provider.yaml: | #{sidecar.dashboards.provider|template(yaml)}
 
     # TODO: move this to config
     apiVersion: 1

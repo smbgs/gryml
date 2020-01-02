@@ -1,25 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: #{chart.name}
-  labels: #[append]{chart.labels}
-  annotations: #[append]{chart.annotations}
-  namespace: #{grafana.namespace}
+  name: "" #{chart.name}
+  labels: {} #[append]{chart.labels}
+  annotations: {} #[append]{chart.annotations}
+  namespace: "" #{grafana.namespace}
 spec:
-  replicas: #{replicas}
+  replicas: 1 #{replicas}
   selector:
     matchLabels:
       app: #{chart.name}
       release: #{chart.release}
-  strategy: #{deploymentStrategy}
+  strategy: {} #{deploymentStrategy}
   template:
     metadata:
       labels: #[merge]{podLabels}
         app: #{grafana.name}
         release: #{chart.release}
       annotations: #[merge]{podAnnotations}
-        checksum/config: #{"configmap.yaml"|fileSha256sum}
-        checksum/dashboards-json-config: #{"dashboards-json-configmap.yaml"|fileSha256sum}
-        checksum/sc-dashboard-provider-config: #{"dashboards-json-configmap.yaml"|fileSha256sum}
-        checksum/secret: #[if not admin.existingSecret]{"dashboards-json-configmap.yaml"|fileSha256sum}
-    spec: #{grafana.pod}
+        checksum/config: "" #{"configmap.yaml"|fileSha256sum}
+        checksum/dashboards-json-config: "" #{"dashboards-json-configmap.yaml"|fileSha256sum}
+        checksum/sc-dashboard-provider-config: "" #{"dashboards-json-configmap.yaml"|fileSha256sum}
+        checksum/secret: "" #[if not admin.existingSecret]{"dashboards-json-configmap.yaml"|fileSha256sum}
+    spec: [] #{grafana.pod}

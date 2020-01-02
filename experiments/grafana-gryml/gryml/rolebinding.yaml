@@ -1,0 +1,17 @@
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  name: "" #{chart.name}
+  labels: {} #[append]{chart.labels}
+  namespace: "" #{grafana.namespace}
+  annotations: {} #[merge]{annotations}
+
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "" #{chart.name}
+
+subjects:
+  - kind: ServiceAccount
+    name: "" #{grafana.serviceAccountName}
+    namespace: grafana #{chart.namespace}

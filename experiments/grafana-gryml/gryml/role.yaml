@@ -1,0 +1,20 @@
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  name: "" #{chart.name}
+  labels: {} #[append]{chart.labels}
+  namespace: "" #{grafana.namespace}
+  annotations: {} #[merge]{annotations}
+
+rules: [] #[append]{rbac.extraRoleRules}
+
+  #[if .Values.rbac.pspEnabled]
+  - apiGroups:      ['extensions']
+    resources:      ['podsecuritypolicies']
+    verbs:          ['use']
+    resourceNames:  [] #[append]{chart.name}
+
+  #[if and rbac.namespaced or sidecar.dashboards.enabled or sidecar.datasources.enabled]
+  - apiGroups: [""] # "" indicates the core API group
+    resources: ["configmaps", "secrets"]
+    verbs: ["get", "watch", "list"]

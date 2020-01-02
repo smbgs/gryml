@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: #{chart.name}
-  labels: #[append]{chart.labels}
-  annotations: #[append]{chart.annotations}
-  namespace: #{grafana.namespace}
+  name: "" #{chart.name}
+  labels: {} #[append]{chart.labels}
+  annotations: {} #[append]{chart.annotations}
+  namespace: "" #{grafana.namespace}
 
 data: #[append]{configs} #TODO: nested ini templates?
-  plugins: #[if plugins]{plugins|join(,)}
-  grafana.ini: #{grafana.ini|template(ini)}
+  plugins: [] #[if plugins]{plugins|join(,)}
+  grafana.ini: "" #{grafana.ini|template(ini)}
 
   # TODO: this is very ugly, what can we do about that?
   download_dashboards.sh: | #[if dashboards]{dashboards}|template(helm)

@@ -21,6 +21,7 @@ rbac:
   create: true
   namespaced: false
   extraClusterRoleRules: []
+  pspEnabled: true
 
 sidecar:
   dashboards: true
@@ -32,12 +33,17 @@ dashboards:
 persistence:
   enabled: true
   type: pvc
+  annotations: {}
+  finalizers: {}
+  accessModes: []
+  size: 1Gi
+  storageClassName: "default"
 
 # TODO: consider
 #$gryml-after: and $gryml-before
 #  - include: parts/cluster-role
 
-podAnnotations:
+podAnnotations: {}
 
 ingress:
   enabled: true
@@ -45,6 +51,9 @@ ingress:
 podDisruptionBudget:
   minAvailable: 3
     maxUnavailable: 2
+
+admin:
+  existingSecret: ""
 
 $gryml-sources:
   - gryml/clusterrole.yaml            #[if rbac.create and not rbac.namespaced]
@@ -59,3 +68,11 @@ $gryml-sources:
   - gryml/headless-service.yaml       #[if persistence.enabled and (not persistence.existingClaim) and (persistence.type == "statefulset")]
 
   - gryml/ingress.yaml                #[if ingress.enabled]
+  - gryml/poddisruptionbudget.yaml    #[if podDisruptionBudget]
+  - gryml/podsecuritypolicy.yaml      #[if rbac.pspEnabled]
+
+  - gryml/pvc.yaml                    #[if persistence.enabled and (not persistence.existingClaim) and (persistence.type == "pvc"]
+  - gryml/role.yaml                   #[if rbac.create]
+  - gryml/rolebinding.yaml            #[if rbac.create]
+
+  - gryml/rolebinding.yaml            #[if not admin.existingSecret]
