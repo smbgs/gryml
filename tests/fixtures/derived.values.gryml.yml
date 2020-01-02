@@ -1,0 +1,18 @@
+gryml:
+  - import: base.values.gryml.yml
+
+application: #[merge]{application}
+  version: 123
+
+config: #[merge]{config}
+  simple_list_items:
+    - three
+  dict_items:
+    - name: one
+      setting1: changed1
+      setting2: changed2
+      setting3: new1
+    - name: three
+      setting1: new2
+      setting2: new3
+  new_item: new!

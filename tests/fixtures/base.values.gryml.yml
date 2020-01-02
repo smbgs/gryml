@@ -1,0 +1,18 @@
+
+api-version:
+  deployment: 'apps/v1'
+
+application:
+  name: example
+
+config:
+  simple_list_items:
+    - one
+    - two
+  dict_items:
+    - name: one
+      setting1: 1
+      setting2: 2
+    - name: two
+      setting1: 3
+      setting2: 4

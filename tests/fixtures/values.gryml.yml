@@ -1,0 +1,17 @@
+
+api-version:
+  deployment: 'apps/v1'
+
+name: 'custom-name'
+image: 'custom-image'
+tag: 'latest'
+
+replicas: 2
+service-account-name: 'custom-service-account'
+
+env:
+  common:
+    - name: "COMMON_GREETING"
+      value: "Common hello"
+    - name: "DEMO_GREETING"
+      value: "Hello from the custom environment"

@@ -1,0 +1,37 @@
+apiVersion: apps/v1 #{api-version.deployment}
+kind: Deployment
+metadata:
+  name: "application" #{prefix-{name}-suffix}
+spec:
+  replicas: 1 #{requests-replicas}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      application: "application" #{name}
+  template:
+    metadata:
+      labels:
+        application: "application" #{name}
+
+    spec:
+      serviceAccountName: serviceAccount #{service-account-name}
+      containers:
+        - name: application-main #{main-{name}-{role}-container}
+          image: image #{{image}:{tag}}
+
+          env: #[merge-using name]{env.common}
+            - name: DEMO_GREETING
+              value: "Hello from the environment"
+            - name: DEMO_FAREWELL
+              value: "Such a sweet sorrow"
+        - name: application-secondary #{secondary-{name}-{role}-container}
+          image: image #{{image2}:{tag}}
+
+          env: #[append]{env.common}
+            - name: DEMO_FAREWELL
+              value: "Such a sweet sorrow"
+
+        - name: application-third #{secondary-{name}-{role}-container}
+          image: image #{{image3}:{tag}}
+

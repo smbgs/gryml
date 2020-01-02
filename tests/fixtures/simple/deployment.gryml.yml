@@ -1,0 +1,24 @@
+apiVersion: apps/v1 #{api-version.deployment}
+kind: Deployment
+metadata:
+  name: "application" #{name}
+spec:
+  replicas: 1 #{replicas}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      application: "application" #{name}
+  template:
+    metadata:
+      labels:
+        application: "application" #{name}
+    spec:
+      serviceAccountName: serviceAccount #{service-account-name}
+      containers:
+        - name: application-main #{main-{application}-container}
+          image: image #{image}
+          command:
+            - echo
+          args:
+            - "hello world"

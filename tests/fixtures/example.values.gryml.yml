@@ -1,0 +1,28 @@
+
+api-version:
+  deployment: 'apps/v1'
+
+role: 'test'
+tier: 'frontend'
+name: 'custom-name'
+
+image:
+  name:  'custom-image'
+  version: 'latest'
+
+requests:
+  replicas: 2
+
+service-account-name: 'custom-service-account'
+
+container:
+  port: 89
+
+env:
+  getHostsFrom: env
+  common:
+    - name: "COMMON_GREETING"
+      value: "Common hello"
+    - name: "DEMO_GREETING"
+      value: "Hello from the custom environment"
+
