@@ -1,0 +1,61 @@
+
+chart:
+  app: grafana
+  name: grafana
+  labels:
+    app: chart-app #{chart.app}
+    chart: chart-name #{chart.name}
+    release: "1" #{release.name}
+    heritage: "service" #{release.service}
+  annotations: []
+
+grafana:
+  serviceAccountName: test
+  namespace: grafana
+
+release:
+  name: 1
+  service: grafana
+
+rbac:
+  create: true
+  namespaced: false
+  extraClusterRoleRules: []
+
+sidecar:
+  dashboards: true
+  datasources: false
+
+dashboards:
+  provider: dashboard
+
+persistence:
+  enabled: true
+  type: pvc
+
+# TODO: consider
+#$gryml-after: and $gryml-before
+#  - include: parts/cluster-role
+
+podAnnotations:
+
+ingress:
+  enabled: true
+
+podDisruptionBudget:
+  minAvailable: 3
+    maxUnavailable: 2
+
+$gryml-sources:
+  - gryml/clusterrole.yaml            #[if rbac.create and not rbac.namespaced]
+  - gryml/clusterrolebinding.yaml     #[if rbac.create and not rbac.namespaced]
+  - gryml/configmap.yaml
+  - gryml/configmap-dashboard-provider.yaml #[if sidecar.dashboards.enabled]
+
+  # TODO: iteration in sources, multiple directives
+  - gryml/dashboards-json-configmap.yaml    #[if dashboards][for $provider: $dashboard in dashboards]
+
+  - gryml/deployment                  #[if not persistence enabled or persistence.type == "pvc"]
+  - gryml/headless-service.yaml       #[if persistence.enabled and (not persistence.existingClaim) and (persistence.type == "statefulset")]
+
+  - gryml/ingress.yaml                #[if ingress.enabled]

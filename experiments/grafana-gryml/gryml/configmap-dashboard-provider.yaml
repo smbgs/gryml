@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-role #{chart.name}
+  labels: #[append]{chart.labels}
+  annotations: #[append]{chart.annotations}
+  namespace: #{grafana.namespace}
+data:
+  provider.yaml: #{sidecar.dashboards.provider|template(yaml)}
+
+    # TODO: move this to config
+    apiVersion: 1
+    providers:
+    - name: '{{ .Values.sidecar.dashboards.provider.name }}'
+      orgId: {{ .Values.sidecar.dashboards.provider.orgid }}
+      folder: '{{ .Values.sidecar.dashboards.provider.folder }}'
+      type: {{ .Values.sidecar.dashboards.provider.type }}
+      disableDeletion: {{ .Values.sidecar.dashboards.provider.disableDelete }}
+      allowUiUpdates: {{ .Values.sidecar.dashboards.provider.allowUiUpdates }}
+      options:
+        path: {{ .Values.sidecar.dashboards.folder }}{{- with .Values.sidecar.dashboards.defaultFolderName }}/{{ . }}{{- end }}

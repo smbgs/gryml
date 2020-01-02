@@ -1,0 +1,16 @@
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: grafana #{chart.name}
+  labels: #[append]{chart.labels}
+  annotations: #[append]{chart.annotations}
+
+subjects:
+  - kind: ServiceAccount
+    name: grafana #{grafana.serviceAccountName}
+    namespace: grafana #{grafana.namespace}
+
+roleRef:
+  kind: ClusterRole
+  name: grafana-role #{chart.name}
+  apiGroup: rbac.authorization.k8s.io
