@@ -6,6 +6,10 @@ metadata:
   #{"prefix/$(chart.name)/asd/$(chart.name)"|s}
   title: formatted
 
+  is_ommited: true #[if false]
+  is_123: true #[if false][else]{"123"}
+  is_456: 1 #[if true]{"456"}[else]{"xxx"}
+
   #[merge]{chart.labels}
   labels: {} #[merge]{chart.annotations}
 
@@ -53,7 +57,7 @@ repeatings:
   # afddafad [asds] {sadsa} #[asdsd]
   # [should not break]
   #[repeat]{settings}
-  - name: r #{"first-settings-$(it.name)-id$(i)"|s}
+  - name: r #{"first-settings-$(it.name)-id$(i)"|s} so as this
     index: v #{i}
     val: v #{it}
 

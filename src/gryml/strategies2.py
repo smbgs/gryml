@@ -44,7 +44,7 @@ def else_value(core, old_value, strat_expression, value_expression, context):
     if not context.get('value_used'):
         context['value_used'] = True
         return core.eval(value_expression, context)
-
+    return old_value
 
 @Strategies.strategy('repeat')
 def repeat_value(core, old_value, strat_expression, value_expression, context):
@@ -58,6 +58,7 @@ def repeat_value(core, old_value, strat_expression, value_expression, context):
     iterable = core.eval(value_expression, context)
     context['value_repeated'] = True
 
+    # TODO: this is not pure
     result = context['list']  # type: list
 
     for i, it in enumerate(iterable):
