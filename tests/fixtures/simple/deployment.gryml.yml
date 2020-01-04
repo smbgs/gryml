@@ -1,4 +1,4 @@
-apiVersion: apps/v1 #{api-version.deployment}
+apiVersion: apps/v1 #{apiVersion.deployment}
 kind: Deployment
 metadata:
   name: "application" #{name}
@@ -14,9 +14,9 @@ spec:
       labels:
         application: "application" #{name}
     spec:
-      serviceAccountName: serviceAccount #{service-account-name}
+      serviceAccountName: serviceAccount #{serviceAccountName}
       containers:
-        - name: application-main #{main-{application}-container}
+        - name: application-main #{"main-"~application~"-container"}
           image: image #{image}
           command:
             - echo

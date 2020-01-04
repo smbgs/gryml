@@ -1,9 +1,9 @@
-apiVersion: apps/v1 #{api-version.deployment}
+apiVersion: apps/v1 #{apiVersion.deployment}
 kind: Deployment
 metadata:
-  name: "application" #{prefix-{name}-suffix}
+  name: "application" #{"prefix-$(name)-suffix"|s}
 spec:
-  replicas: 1 #{requests-replicas}
+  replicas: 1 #{requests.replicas}
   strategy:
     type: Recreate
   selector:
@@ -15,23 +15,23 @@ spec:
         application: "application" #{name}
 
     spec:
-      serviceAccountName: serviceAccount #{service-account-name}
+      serviceAccountName: serviceAccount #{serviceAccountName}
       containers:
-        - name: application-main #{main-{name}-{role}-container}
-          image: image #{{image}:{tag}}
+        - name: application-main #{"main-$(name)-$(role)-container"|s}
+          image: image #{"$(image):$(tag)|s"}
 
           env: #[merge-using name]{env.common}
             - name: DEMO_GREETING
               value: "Hello from the environment"
             - name: DEMO_FAREWELL
               value: "Such a sweet sorrow"
-        - name: application-secondary #{secondary-{name}-{role}-container}
-          image: image #{{image2}:{tag}}
+        - name: application-secondary #{"secondary-$(name)-$(role)-container"|s}
+          image: image #{"$(image2):$(tag)"|s}
 
           env: #[append]{env.common}
             - name: DEMO_FAREWELL
               value: "Such a sweet sorrow"
 
-        - name: application-third #{secondary-{name}-{role}-container}
-          image: image #{{image3}:{tag}}
+        - name: application-third #{"secondary-$(name)-$(role)-container"|s}
+          image: image #{"image3~":"~tag}
 

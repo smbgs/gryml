@@ -1,6 +1,7 @@
+version: v1 #{apiVersion.deployment}
 metadata:
 
-  #{"prefix" ~ chart.name ~ "213"}
+  #{"prefix-"~chart.name~"-213"}
   name: grafana-role
 
   #{"prefix/$(chart.name)/asd/$(chart.name)"|s}

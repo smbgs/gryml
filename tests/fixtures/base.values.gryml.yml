@@ -1,5 +1,5 @@
 
-api-version:
+apiVersion:
   deployment: 'apps/v1'
 
 application:

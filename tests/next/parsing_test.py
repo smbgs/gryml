@@ -46,7 +46,8 @@ class ParsingTest(unittest.TestCase):
         values_file = Path('../fixtures/next/values.yaml')
 
         stream = self.gryml.iterate_path(Path(definition_file))
-        self.gryml.load_values(values_file)
+        values = self.gryml.load_values(values_file)
+        self.gryml.set_values(values)
 
         directory, body, definition = next(stream)
         tags = self.gryml.extract_tags(body)

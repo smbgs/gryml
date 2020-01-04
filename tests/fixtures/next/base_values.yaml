@@ -1,0 +1,6 @@
+
+apiVersion:
+  deployment: v2
+
+baseValues:
+  test1: one

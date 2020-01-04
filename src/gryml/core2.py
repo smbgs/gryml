@@ -1,18 +1,16 @@
 import random
 import re
 import string
-
-import sys
-from copy import copy, deepcopy
+from datetime import date, datetime
 from io import StringIO
 from pathlib import Path
 
-from jinja2 import Environment, UndefinedError, Undefined
+import sys
+from jinja2 import Environment, Undefined
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq, LineCol
 
 from gryml.strategies2 import Strategies
-from string import Template
 
 
 class FriendlyUndefined(Undefined):
@@ -37,14 +35,14 @@ class Gryml:
         self.env.filters['randstr'] = \
             lambda n: ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(n))
 
-        # self.env.filters['s'] = \
-        #     lambda s: self.sub_pattern.sub(lambda mo: self.eval(mo.group(1), {}), s)
+        self.env.globals['semstamp'] = lambda r: datetime.utcnow().strftime(f'{r}.%Y%m.%d-%H%M')
 
     def set_values(self, values):
         self.values = values
 
     def eval(self, expression, context=None, **kwargs):
 
+        # This is dynamic so that context is available to the formatter
         self.env.filters['s'] = \
             lambda s: self.sub_pattern.sub(lambda mo: str(self.eval(mo.group(1), context)), s)
 
@@ -54,15 +52,44 @@ class Gryml:
             **kwargs
         })
 
-    def load_values(self, path: Path):
+    def load_values(self, path: Path, base_values=None, process=False, load_nested=False, load_sources=False):
 
         if not path.exists():
             raise FileNotFoundError(path)
 
-        if path.is_file():
-            with open(path) as rd:
-                self.yaml = YAML(typ=['safe', 'rt'])
-                self.values = self.yaml.load(rd)
+        if not path.is_file():
+            return
+
+        with open(str(path)) as rd:
+            self.yaml = YAML(typ=['safe', 'rt'])
+
+            values = self.yaml.load(rd)
+            rd.seek(0)
+            before_values = CommentedMap(base_values if base_values else {})
+
+            load_before = values.pop('$gryml-values-before', [])
+            load_after = values.pop('$gryml-values-after', [])
+            load_sources = values.pop('$gryml-sources', [])
+
+            if load_nested:
+                for it in load_before:
+                    before_values.update(self.load_values(path.parent.resolve() / it, base_values, process, load_nested, load_sources))
+
+            if process:
+                tags = self.extract_tags(rd)
+                before_values.update(values)
+                values = self.process(values, tags, 0, {'values': before_values})
+                before_values.update(values)
+                values = before_values
+
+            if load_nested:
+                after_values = CommentedMap()
+                for it in load_after:
+                    after_values.update(self.load_values(path.parent.resolve() / it, values, process, load_nested, load_sources))
+
+                values.update(after_values)
+
+            return values
 
     def iterate_path(self, path: Path):
 
@@ -98,7 +125,7 @@ class Gryml:
                     result_comments[i + 1] = matches
         return result_comments
 
-    def apply_strat(self, name, old_value, strat_expression, value_expression, context):
+    def apply_strategy(self, name, old_value, strat_expression, value_expression, context):
         return Strategies.apply(name, self, old_value, strat_expression, value_expression, context)
 
     def apply_value(self, target, tags, context):
@@ -130,7 +157,7 @@ class Gryml:
             if rule['strat'] is None:
                 rule['strat'] = 'set'
 
-            value = self.apply_strat(rule['strat'], value, rule['arg_exp'], rule['exp'], context)
+            value = self.apply_strategy(rule['strat'], value, rule['arg_exp'], rule['exp'], context)
 
         return value
 
@@ -142,12 +169,17 @@ class Gryml:
             result = CommentedMap()
             setattr(result, LineCol.attrib, target.lc)
             for k, v in target.items():
+                if not target.lc.data or k not in target.lc.data:
+                    result[k] = v
+                    continue
+
                 ctx = {
                     'values': context.get('values', {}) if context else {},
                     'is_map_value': True,
                     'key': k,
                     'line': target.lc.data[k][0],
                 }
+
                 value = self.process(v, tags, offset, ctx)
                 if value is not None:
                     result[k] = value

@@ -1,5 +1,5 @@
 $gryml-values-before:
-  - gryml/base_values.yaml
+  - base_values.yaml
 
 chart:
   app: grafana
@@ -9,16 +9,23 @@ chart:
     chart: chart-name #{chart.name}
     release: 1 #{release.name}
     heritage: "service" #{release.service}
+    baseValue1: "" #{baseValues.test1} // Should be "one"
   annotations:
     annotation: "12332"
+
+valueTests:
+  val1: 1
+  val2: 0 #{valueTests.val1 + 1} // should be 2
+  val3: 0 #{valueTests.val2 + 1} // should be 1 (we apply things to the initial value)
 
 grafana:
   serviceAccountName: test
   namespace: grafana
 
 release:
-  name: 1
-  service: grafana
+  version: 1
+  name: 1 #{semstamp(release.version)}
+  service: gryml
 
 rbac:
   create: true
@@ -70,8 +77,8 @@ envRenderSecret:
   key: value
 
 $gryml-values-after:
-  - gryml/some_more_values.yaml
+  - some_more_values.yaml
 
 $gryml-sources:
-  - gryml/clusterrole.yaml            #[if rbac.create and not rbac.namespaced]
-  - gryml/clusterrolebinding.yaml     #[if rbac.create and not rbac.namespaced]
+  - clusterrole.yaml            #[if rbac.create and not rbac.namespaced]
+  - clusterrolebinding.yaml     #[if rbac.create and not rbac.namespaced]
