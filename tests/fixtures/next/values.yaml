@@ -44,10 +44,6 @@ persistence:
   size: 1Gi
   storageClassName: "default"
 
-# TODO: consider
-#$gryml-after: and $gryml-before
-#  - include: parts/cluster-role
-
 podAnnotations: {}
 
 ingress:
@@ -75,5 +71,5 @@ $gryml-values-after:
   - some_more_values.yaml
 
 $gryml-sources:
-  - clusterrole.yaml            #[if rbac.create and not rbac.namespaced]
-  - clusterrolebinding.yaml     #[if rbac.create and not rbac.namespaced]
+  - tag_placement.yaml
+  - tag_placement.yaml

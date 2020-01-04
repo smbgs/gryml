@@ -26,8 +26,9 @@ class Gryml:
 
     sub_pattern = re.compile(rf"\$\((?:([a-zA-Z][a-zA-Z0-9._]*))\)")
 
-    def __init__(self):
+    def __init__(self, output=None):
         self.values = {}
+        self.output = output or StringIO()
         self.env = Environment(undefined=FriendlyUndefined)
         self.yaml = YAML(typ=['safe', 'rt'])
 
@@ -54,7 +55,8 @@ class Gryml:
             **kwargs
         })
 
-    def load_values(self, path: Path, base_values=None, process=False, load_nested=False, load_sources=False):
+    def load_values(self, path: Path, base_values=None, process=False, mutable=False,
+                    load_nested=False, load_sources=False):
 
         if not path.exists():
             raise FileNotFoundError(path)
@@ -69,27 +71,36 @@ class Gryml:
             rd.seek(0)
             before_values = CommentedMap(base_values if base_values else {})
 
-            load_before = values.pop('$gryml-values-before', [])
-            load_after = values.pop('$gryml-values-after', [])
-            load_sources = values.pop('$gryml-sources', [])
+            loadable_before = values.pop('$gryml-values-before', [])
 
             if load_nested:
-                for it in load_before:
+                for it in loadable_before:
                     before_values.update(self.load_values(path.parent.resolve() / it, base_values, process, load_nested, load_sources))
 
             if process:
                 tags = self.extract_tags(rd)
                 before_values.update(values)
-                values = self.process(values, dict(tags=tags, values=before_values, offset=0))
+                values = self.process(values, dict(tags=tags, values=before_values, offset=0, mutable=mutable))
                 before_values.update(values)
                 values = before_values
 
+            loadable_after = values.pop('$gryml-values-after', [])
+            loadable_sources = values.pop('$gryml-sources', [])
+
             if load_nested:
                 after_values = CommentedMap()
-                for it in load_after:
+                for it in loadable_after:
                     after_values.update(self.load_values(path.parent.resolve() / it, values, process, load_nested, load_sources))
 
                 values.update(after_values)
+
+            if load_sources:
+                for source_path in loadable_sources:
+                    for sub_path, output, it in self.iterate_path(path.parent.resolve() / source_path):
+                        sub_tags = self.extract_tags(output)
+                        result = self.process(it, dict(tags=sub_tags, values=values, offset=it.lc.line, mutable=False))
+                        self.output.write('---\n')
+                        self.yaml.dump(result, self.output)
 
             return values
 
@@ -184,6 +195,7 @@ class Gryml:
                     'tags': tags,
                     'values': values,
                     'offset': offset,
+                    'mutable': mutable,
                     'is_map_value': True,
                     'key': k,
                     'line': target.lc.data[k][0] - offset + 1,
@@ -210,6 +222,7 @@ class Gryml:
                     'tags': tags,
                     'values': values,
                     'offset': offset,
+                    'mutable': mutable,
                     'is_list_item': True,
                     'list': result,
                     'index': k,
@@ -231,3 +244,4 @@ class Gryml:
 
     def print(self, target):
         self.yaml.dump(target, sys.stdout)
+
