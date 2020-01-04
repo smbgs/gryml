@@ -31,4 +31,4 @@ class ParsingTest(unittest.TestCase):
         self.assertNotIn("should_be_removed_2", simple_list)
         self.assertNotIn("should_be_removed_3", simple_list)
 
-        self.assertEquals(6, len(simple_list))
+        self.assertEqual(7, len(simple_list))

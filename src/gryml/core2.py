@@ -78,9 +78,9 @@ class Gryml:
                     before_values.update(self.load_values(path.parent.resolve() / it, base_values, process, load_nested, load_sources))
 
             if process:
-                tags = self.extract_tags(rd)
+                tags = self.extract_tags(rd, 0)
                 before_values.update(values)
-                values = self.process(values, dict(tags=tags, values=before_values, offset=0, mutable=mutable))
+                values = self.process(values, dict(tags=tags, values=before_values, mutable=mutable))
                 before_values.update(values)
                 values = before_values
 
@@ -96,8 +96,8 @@ class Gryml:
 
             if load_sources:
                 for source_path in loadable_sources:
-                    for sub_path, output, it in self.iterate_path(path.parent.resolve() / source_path):
-                        sub_tags = self.extract_tags(output)
+                    for sub_path, output, it, offset in self.iterate_path(path.parent.resolve() / source_path):
+                        sub_tags = self.extract_tags(output, offset)
                         result = self.process(it, dict(tags=sub_tags, values=values, offset=it.lc.line, mutable=False))
                         self.output.write('---\n')
                         self.yaml.dump(result, self.output)
@@ -135,7 +135,7 @@ class Gryml:
         for i, line in enumerate(body):
             matches = self.gryml_line_mask.search(line)
             if matches:
-                line_start = bool(matches.group(1))
+                line_start = matches.group(1) is not None
                 matches = [it.groupdict() for it in self.gryml_mask.finditer(line[matches.regs[0][0]:]) if it.lastgroup]
                 if matches:
                     for it in matches:
@@ -186,6 +186,7 @@ class Gryml:
         tags = context.get('tags', {}) if context else {}
         values = context.get('values', {}) if context else {}
         mutable = context.get('mutable', False) if context else False
+        line = context.setdefault('line', 0) if context else 0
 
         if isinstance(target, dict):
             result = CommentedMap()
@@ -232,17 +233,19 @@ class Gryml:
                     'value_used': True
                 }
 
-                value = self.process(v, ctx)
+                # Only processing this iter value if it's not on the same string as parent definition
+                if line != ctx['line']:
+                    value = self.process(v, ctx)
+                else:
+                    value = v
+
                 if ctx['value_used']:
                     result.append(value)
             if mutable:
                 target.clear()
                 target.extend(result)
 
-        if context and context.get('line'):
-            return self.apply_value(result, context)
-        else:
-            return result
+        return self.apply_value(result, context)
 
     def iterate_definitions(self, definition_file):
         for directory, body, definition, offset in self.iterate_path(Path(definition_file)):

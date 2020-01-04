@@ -2,7 +2,6 @@ import unittest
 from pathlib import Path
 
 from jinja2 import Undefined
-from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
 
 from gryml.cli import init_parser
@@ -19,14 +18,14 @@ class ParsingTest(unittest.TestCase):
     def test_iterate_path(self):
         definition_file = Path('../fixtures/next/tag_placement.yaml')
         stream = self.gryml.iterate_path(Path(definition_file))
-        directory, body, definition = next(stream)
+        directory, body, definition, offset = next(stream)
 
         self.assertEqual(definition_file, directory)
         self.assertIsInstance(definition, CommentedMap)
         self.assertTrue(str(definition.ca.items['rules'][2].value).startswith("#[append]{rbac.extraClusterRoleRules}"))
 
-        tags = self.gryml.extract_tags(body)
-        result_values = self.gryml.process(definition, dict(tags=tags, offset=definition.lc.line))
+        tags = self.gryml.extract_tags(body, offset)
+        result_values = self.gryml.process(definition, dict(tags=tags))
 
         self.assertIsInstance(result_values, dict)
 
@@ -50,8 +49,8 @@ class ParsingTest(unittest.TestCase):
         values = self.gryml.load_values(values_file)
         self.gryml.set_values(values)
 
-        directory, body, definition = next(stream)
-        tags = self.gryml.extract_tags(body)
+        directory, body, definition, offset = next(stream)
+        tags = self.gryml.extract_tags(body, offset)
 
-        result_values = self.gryml.process(definition, dict(tags=tags, offset=definition.lc.line))
+        result_values = self.gryml.process(definition, dict(tags=tags))
         self.gryml.print(result_values)

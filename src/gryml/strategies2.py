@@ -64,7 +64,6 @@ def repeat_value(core, old_value, strat_expression, value_expression, context):
     for i, it in enumerate(iterable):
         # TODO: custom context values names
         updated = core.process(deepcopy(old_value), context=dict(
-            offset=context['offset'],
             tags=context['tags'],
             values=dict(
                 i=i,
