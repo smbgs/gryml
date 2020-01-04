@@ -34,18 +34,21 @@ metadata:
 
 crazy-list:
 
+  #[if false]
+  - zero
+
   - one
 
   #[if chart]
   - two
 
-  #[if]{something}
+  #[if something]
   - three
 
   - four
   - five #{"six :)"}
 
-  #[if]{false}
+  #[if false]
   - nope
 
   #[if true]

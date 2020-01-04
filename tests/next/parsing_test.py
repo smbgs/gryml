@@ -13,7 +13,6 @@ class ParsingTest(unittest.TestCase):
 
     def setUp(self):
         self.parser = init_parser()
-        self.values = YAML().load(Path('../../experiments/grafana-gryml/values.yaml'))
 
         self.gryml = Gryml()
 

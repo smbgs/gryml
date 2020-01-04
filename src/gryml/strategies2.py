@@ -44,6 +44,7 @@ def else_value(core, old_value, strat_expression, value_expression, context):
         return core.eval(value_expression, context)
     return old_value
 
+
 @Strategies.strategy('repeat')
 def repeat_value(core, old_value, strat_expression, value_expression, context):
 

@@ -71,5 +71,9 @@ $gryml-values-after:
   - some_more_values.yaml
 
 $gryml-sources:
+
+  #[if false]
+  - some.yaml
+
   - tag_placement.yaml
-  - tag_placement.yaml
+

@@ -113,19 +113,24 @@ class Gryml:
 
         if path.is_file():
             with open(path) as rd:
+                stating_pos = rd.tell()
                 prd = self.yaml.load_all(rd)
+
                 for it in prd:
+                    ending_pos = rd.tell()
                     output = StringIO()
-                    self.yaml.dump(it, output)
+                    rd.seek(stating_pos)
+                    output.write(rd.read(ending_pos - stating_pos))
                     output.seek(0)
-                    yield path, output, it
+                    yield path, output, it, stating_pos
+                    stating_pos = ending_pos
 
         elif path.is_dir():
             for sub_dir in path.iterdir():
                 for sub_path, output, it in self.iterate_path(sub_dir):
                     yield sub_path, output, it
 
-    def extract_tags(self, body):
+    def extract_tags(self, body, offset):
         result_comments = {}
         for i, line in enumerate(body):
             matches = self.gryml_line_mask.search(line)
@@ -135,7 +140,7 @@ class Gryml:
                 if matches:
                     for it in matches:
                         it.update(line_start=line_start)
-                    result_comments[i + 1] = matches
+                    result_comments[i + 1 + offset] = matches
         return result_comments
 
     def apply_strategy(self, name, old_value, strat_expression, value_expression, context):
@@ -180,7 +185,6 @@ class Gryml:
         result = target
         tags = context.get('tags', {}) if context else {}
         values = context.get('values', {}) if context else {}
-        offset = context.get('offset', 0) if context else 0
         mutable = context.get('mutable', False) if context else False
 
         if isinstance(target, dict):
@@ -194,11 +198,10 @@ class Gryml:
                 ctx = {
                     'tags': tags,
                     'values': values,
-                    'offset': offset,
                     'mutable': mutable,
                     'is_map_value': True,
                     'key': k,
-                    'line': target.lc.data[k][0] - offset + 1,
+                    'line': target.lc.data[k][0] + 1,
                     'value_used': True
                 }
 
@@ -221,12 +224,11 @@ class Gryml:
                 ctx = {
                     'tags': tags,
                     'values': values,
-                    'offset': offset,
                     'mutable': mutable,
                     'is_list_item': True,
                     'list': result,
                     'index': k,
-                    'line': target.lc.data[k][0] - offset + 1 if target.lc.data[k][0] != target.lc.line else None,
+                    'line': target.lc.data[k][0] + 1,
                     'value_used': True
                 }
 
@@ -241,6 +243,14 @@ class Gryml:
             return self.apply_value(result, context)
         else:
             return result
+
+    def iterate_definitions(self, definition_file):
+        for directory, body, definition, offset in self.iterate_path(Path(definition_file)):
+            tags = self.extract_tags(body, offset)
+            yield self.process(definition, dict(tags=tags))
+
+    def process_first_definition(self, definition_file):
+        return next(self.iterate_definitions(definition_file))
 
     def print(self, target):
         self.yaml.dump(target, sys.stdout)

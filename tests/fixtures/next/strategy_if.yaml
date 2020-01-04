@@ -1,0 +1,49 @@
+
+#[if false] // Should be removed
+bad_dict:
+  - test: 1
+
+simple_list:
+
+  #[if false]
+  - should_be_removed_1
+
+  - should_be_included_1
+
+  #[if 10 > 100] // Should be removed
+  - should_be_removed_2
+
+  #[if true]
+  - should_be_included_2
+
+  - should_be_included_3
+
+  #[if true]
+  - should_be_new #{"new"}
+
+  #[if false]
+  - should_be_removed_3
+
+  #[if true]
+  - should_be_included_4
+
+  #[if false][else]{"replacement"}
+  - should_be_repaced
+
+  - should_be_removed_4 #[if false]
+  - should_be_included_5 #[if true]
+
+
+#[if true] // should be included
+dict_list:
+
+  #[if 10 > 100]
+  - name: should_be_removed_1
+
+  #[if 10 < 100]
+  - name: should_be_included_2
+    value: should_be_3 #{ 1 + 2 }
+
+  - name: should_be_included_3
+    value: should_be_4 #{ 2 + 2 }
+
