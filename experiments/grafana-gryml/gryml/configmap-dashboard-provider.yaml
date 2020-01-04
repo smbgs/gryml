@@ -6,16 +6,14 @@ metadata:
   annotations: {} #[append]{chart.annotations}
   namespace: "" #{grafana.namespace}
 data:
-  provider.yaml: | #{sidecar.dashboards.provider|template(yaml)}
-
-    # TODO: move this to config
+  provider.yaml: | #[template gryml]
     apiVersion: 1
     providers:
-    - name: '{{ .Values.sidecar.dashboards.provider.name }}'
-      orgId: {{ .Values.sidecar.dashboards.provider.orgid }}
-      folder: '{{ .Values.sidecar.dashboards.provider.folder }}'
-      type: {{ .Values.sidecar.dashboards.provider.type }}
-      disableDeletion: {{ .Values.sidecar.dashboards.provider.disableDelete }}
-      allowUiUpdates: {{ .Values.sidecar.dashboards.provider.allowUiUpdates }}
+    - name: name #{sidecar.dashboards.provider.name}
+      orgId: undefined #{sidecar.dashboards.provider.orgid}
+      folder: undefined #{'sidecar.dashboards.provider.folder}
+      type: none #{sidecar.dashboards.provider.type}
+      disableDeletion: false #{sidecar.dashboards.provider.disableDelete}
+      allowUiUpdates: false #{sidecar.dashboards.provider.allowUiUpdates}
       options:
-        path: {{ .Values.sidecar.dashboards.folder }}{{- with .Values.sidecar.dashboards.defaultFolderName }}/{{ . }}{{- end }}
+        path: / #{sidecar.dashboards.folder}/{sidecar.dashboards.defaultFolderName}

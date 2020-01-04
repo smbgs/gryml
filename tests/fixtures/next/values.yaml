@@ -1,0 +1,77 @@
+$gryml-values-before:
+  - gryml/base_values.yaml
+
+chart:
+  app: grafana
+  name: grafana
+  labels:
+    app: chart-app #{chart.app}
+    chart: chart-name #{chart.name}
+    release: 1 #{release.name}
+    heritage: "service" #{release.service}
+  annotations:
+    annotation: "12332"
+
+grafana:
+  serviceAccountName: test
+  namespace: grafana
+
+release:
+  name: 1
+  service: grafana
+
+rbac:
+  create: true
+  namespaced: false
+  extraClusterRoleRules: []
+  pspEnabled: true
+
+sidecar:
+  dashboards: true
+  datasources: false
+
+dashboards:
+  provider: dashboard
+
+persistence:
+  enabled: true
+  type: pvc
+  annotations: {}
+  finalizers: {}
+  accessModes: []
+  size: 1Gi
+  storageClassName: "default"
+
+# TODO: consider
+#$gryml-after: and $gryml-before
+#  - include: parts/cluster-role
+
+podAnnotations: {}
+
+ingress:
+  enabled: true
+
+podDisruptionBudget:
+  minAvailable: 3
+  maxUnavailable: 2
+
+settings:
+  - name: one
+    value: 1
+  - name: two
+    value: 2
+  - name: three
+    value: 3
+
+admin:
+  existingSecret: ""
+
+envRenderSecret:
+  key: value
+
+$gryml-values-after:
+  - gryml/some_more_values.yaml
+
+$gryml-sources:
+  - gryml/clusterrole.yaml            #[if rbac.create and not rbac.namespaced]
+  - gryml/clusterrolebinding.yaml     #[if rbac.create and not rbac.namespaced]

@@ -8,31 +8,37 @@ metadata:
 
 data: #[append]{configs} #TODO: nested ini templates?
   plugins: [] #[if plugins]{plugins|join(,)}
-  grafana.ini: "" #{grafana.ini|template(ini)}
 
-  # TODO: this is very ugly, what can we do about that?
-  download_dashboards.sh: | #[if dashboards]{dashboards}|template(helm)
+  grafana.ini: "" #[template ini]{grafana.ini}
+
+  #[if dashboards]
+  download_dashboards.sh: | #[template]
     #!/usr/bin/env sh
     set -euf
-    {{- if .Values.dashboardProviders }}
-      {{- range $key, $value := .Values.dashboardProviders }}
-        {{- range $value.providers }}
-    mkdir -p {{ .options.path }}
-        {{- end }}
-      {{- end }}
-    {{- end }}
+    {% if dashboardProviders %}
+      {% for key, value in values.dashboardProviders %}
+        {% for provider in value.providers }}
+    mkdir -p {{ provider.options.path }}
+        {% endfor %}
+      {% endfor %}
+    {% endif %}
 
-  {{- range $provider, $dashboards := .Values.dashboards }}
-    {{- range $key, $value := $dashboards }}
-      {{- if (or (hasKey $value "gnetId") (hasKey $value "url")) }}
-    curl -skf \
-    --connect-timeout 60 \
-    --max-time 60 \
-      {{- if not $value.b64content }}
-    -H "Accept: application/json" \
-    -H "Content-Type: application/json;charset=UTF-8" \
-      {{ end }}
-    {{- if $value.url -}}{{ $value.url }}{{- else -}} https://grafana.com/api/dashboards/{{ $value.gnetId }}/revisions/{{- if $value.revision -}}{{ $value.revision }}{{- else -}}1{{- end -}}/download{{- end -}}{{ if $value.datasource }}| sed 's|\"datasource\":[^,]*|\"datasource\": \"{{ $value.datasource }}\"|g'{{ end }}{{- if $value.b64content -}} | base64 -d {{- end -}} \
-    > /var/lib/grafana/dashboards/{{ $provider }}/{{ $key }}.json
-      {{- end -}}
-    {{- end }}
+    {% for provider, dashboards in values.dashboards %}
+      {% for key, value in dashboards %}
+        {% if "gnetId" in value or "url" in value %}
+      curl -skf \
+      --connect-timeout 60 \
+      --max-time 60 \
+        {% if not value.b64content %}
+      -H "Accept: application/json" \
+      -H "Content-Type: application/json;charset=UTF-8" \
+        {% endif %}
+      {% if $value.url -}}
+        {{ $value.url }}
+      {% else %}
+        https://grafana.com/api/dashboards/{{ value.gnetId }}/revisions/{{ value.revision or 1 }}/download
+        {{ value.datasource ? "| sed 's|\"datasource\":[^,]*|\"datasource\": \"{{ $value.datasource }}\"|g'" }}
+        {{ value.b64content ? "| base64 -d" }} \
+      > /var/lib/grafana/dashboards/{{ provider }}/{{ key }}.json
+      {% endfor %}
+    {% endfor %}

@@ -1,0 +1,91 @@
+metadata:
+
+  #{"prefix" ~ chart.name ~ "213"}
+  name: grafana-role
+
+  #{"prefix/$(chart.name)/asd/$(chart.name)"|s}
+  title: formatted
+
+  #[merge]{chart.labels}
+  labels: {} #[merge]{chart.annotations}
+
+  random: random #{10|randstr}
+  #  Some stupid comments in between
+
+  #[merge]{chart.labels}
+  #[merge]{chart.annotations}
+  annotations: {}
+
+  tricky: 123 #{value}
+  #[merge]{chart.annotations}
+  annotations2: {}
+
+  #  Some stupid comments in between 2
+
+  something: {} #[merge]{chart.something}
+
+  #[if]{chart.something}[else]{chart.labels}
+  something_else: {}
+
+crazy-list:
+
+  - one
+
+  #[if chart]
+  - two
+
+  #[if]{something}
+  - three
+
+  - four
+  - five #{"six :)"}
+
+  #[if]{false}
+  - nope
+
+  #[if true]
+  - yep
+
+repeatings:
+
+  - name: base
+
+  # afddafad [asds] {sadsa} #[asdsd]
+  # [should not break]
+  #[repeat]{settings}
+  - name: r #{"first-settings-$(it.name)-id$(i)"|s}
+    index: v #{i}
+    val: v #{it}
+
+  #[repeat]{settings}
+  - name: r #{"second-settings-$(it.name)-id$(i)"|s}
+    index: v #{i}
+    val: v #{it}
+
+  - name: final
+
+crazy-list-2: [1, 2, 3] #[append]{[4]}
+
+rules: #[append]{rbac.extraClusterRoleRules}
+
+  #[if sidecar.dashboards or sidecar.datasources]
+  - apiGroups: [""] # "" indicates the core API group
+    resources: ["configmaps", "secrets"]
+    verbs: ["get", "watch", "list"]
+
+  #[if sidecar.dashboards or sidecar.datasources2]
+  - apiGroups: [""] # "" indicates the core API group
+    resources: ["configmaps", "secrets"]
+    verbs: ["get", "watch", "list"]
+
+rules2:
+
+  #[if sidecar.dashboards or sidecar.datasources]
+  - apiGroups: [""] # "" indicates the core API group
+    resources: ["configmaps", "secrets"]
+    verbs: ["get", "watch", "list"]
+
+  #[if sidecar.dashboards or sidecar.datasources]
+  - apiGroups: [""] # "" indicates the core API group
+    resources: ["configmaps", "secrets"]
+    verbs: ["get", "watch", "list"]

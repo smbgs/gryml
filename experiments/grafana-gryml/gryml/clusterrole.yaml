@@ -6,8 +6,14 @@ metadata:
   annotations: {} #[append]{chart.annotations}
 
 rules: #[append]{rbac.extraClusterRoleRules}
-  #TODO: list pre item tag
+
   #[if sidecar.dashboards or sidecar.datasources]
   - apiGroups: [""] # "" indicates the core API group
     resources: ["configmaps", "secrets"]
     verbs: ["get", "watch", "list"]
+
+  #[if sidecar.dashboards or sidecar.datasources2]
+  - apiGroups: [""] # "" indicates the core API group
+    resources: ["configmaps", "secrets"]
+    verbs: ["get", "watch", "list"]
+
