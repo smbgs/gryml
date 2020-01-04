@@ -16,16 +16,11 @@ chart:
 valueTests:
   val1: 1
   val2: 0 #{valueTests.val1 + 1} // should be 2
-  val3: 0 #{valueTests.val2 + 1} // should be 1 (we apply things to the initial value)
+  val3: 0 #{valueTests.val2 + 1} // should be 3 (we can mutate the values)
 
 grafana:
   serviceAccountName: test
   namespace: grafana
-
-release:
-  version: 1
-  name: 1 #{semstamp(release.version)}
-  service: gryml
 
 rbac:
   create: true

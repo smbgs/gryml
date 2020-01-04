@@ -42,7 +42,9 @@ class Gryml:
 
     def eval(self, expression, context=None, **kwargs):
 
-        # This is dynamic so that context is available to the formatter
+        if context is None:
+            context = {}
+
         self.env.filters['s'] = \
             lambda s: self.sub_pattern.sub(lambda mo: str(self.eval(mo.group(1), context)), s)
 
@@ -78,7 +80,7 @@ class Gryml:
             if process:
                 tags = self.extract_tags(rd)
                 before_values.update(values)
-                values = self.process(values, tags, 0, {'values': before_values})
+                values = self.process(values, dict(tags=tags, values=before_values, offset=0))
                 before_values.update(values)
                 values = before_values
 
@@ -128,11 +130,12 @@ class Gryml:
     def apply_strategy(self, name, old_value, strat_expression, value_expression, context):
         return Strategies.apply(name, self, old_value, strat_expression, value_expression, context)
 
-    def apply_value(self, target, tags, context):
+    def apply_value(self, target, context):
 
         value = target
 
         line = context.get('line')
+        tags = context.get('tags')
 
         rules = []
         comment = tags.get(line)
@@ -161,9 +164,13 @@ class Gryml:
 
         return value
 
-    def process(self, target, tags, offset, context=None):
+    def process(self, target, context=None):
 
         result = target
+        tags = context.get('tags', {}) if context else {}
+        values = context.get('values', {}) if context else {}
+        offset = context.get('offset', 0) if context else 0
+        mutable = context.get('mutable', False) if context else False
 
         if isinstance(target, dict):
             result = CommentedMap()
@@ -174,39 +181,51 @@ class Gryml:
                     continue
 
                 ctx = {
-                    'values': context.get('values', {}) if context else {},
+                    'tags': tags,
+                    'values': values,
+                    'offset': offset,
                     'is_map_value': True,
                     'key': k,
-                    'line': target.lc.data[k][0],
+                    'line': target.lc.data[k][0] - offset + 1,
+                    'value_used': True
                 }
 
-                value = self.process(v, tags, offset, ctx)
-                if value is not None:
-                    result[k] = value
+                value = self.process(v, ctx)
+
+                if mutable:
+                    if ctx['value_used']:
+                        result[k] = value
+                        target[k] = value
+                    else:
+                        del target[k]
+                else:
+                    if ctx['value_used']:
+                        result[k] = value
 
         elif isinstance(target, list):
             result = CommentedSeq()
             setattr(result, LineCol.attrib, target.lc)
             for k, v in enumerate(target):
                 ctx = {
-                    'values': context.get('values', {}) if context else {},
+                    'tags': tags,
+                    'values': values,
+                    'offset': offset,
                     'is_list_item': True,
                     'list': result,
                     'index': k,
-                    'line': target.lc.data[k][0] if target.lc.data[k][0] != target.lc.line else None,
+                    'line': target.lc.data[k][0] - offset + 1 if target.lc.data[k][0] != target.lc.line else None,
+                    'value_used': True
                 }
 
-                value = self.process(v, tags, offset, ctx)
-                if value is not None:
+                value = self.process(v, ctx)
+                if ctx['value_used']:
                     result.append(value)
+            if mutable:
+                target.clear()
+                target.extend(result)
 
         if context and context.get('line'):
-            return self.apply_value(result, tags, {
-                **context,
-                'tags': tags,
-                'offset': offset,
-                'line': context['line'] - offset + 1
-            })
+            return self.apply_value(result, context)
         else:
             return result
 

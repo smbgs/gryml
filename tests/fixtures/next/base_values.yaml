@@ -4,3 +4,8 @@ apiVersion:
 
 baseValues:
   test1: one
+
+release:
+  version: 1
+  name: 1 #{semstamp(release.version) ~ "-" ~ 4|randstr}
+  service: gryml

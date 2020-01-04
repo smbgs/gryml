@@ -29,9 +29,7 @@ def if_value(core, old_value, strat_expression, value_expression, context):
     condition = strat_expression if strat_expression else value_expression
 
     if core.eval(condition, context):
-
         context['may_repeat'] = True
-        #if not any(r['strat'] == 'repeat' for r in context['rules']):
         return core.eval(value_expression, context) or old_value
 
     context['may_repeat'] = False
@@ -57,16 +55,20 @@ def repeat_value(core, old_value, strat_expression, value_expression, context):
 
     iterable = core.eval(value_expression, context)
     context['value_repeated'] = True
+    context['value_used'] = False
 
     # TODO: this is not pure
     result = context['list']  # type: list
 
     for i, it in enumerate(iterable):
         # TODO: custom context values names
-        updated = core.process(deepcopy(old_value), context['tags'], context['offset'], dict(values=dict(
-            i=i,
-            it=it
-        )))
+        updated = core.process(deepcopy(old_value), context=dict(
+            offset=context['offset'],
+            tags=context['tags'],
+            values=dict(
+                i=i,
+                it=it
+            )))
         result.append(updated)
 
     return None

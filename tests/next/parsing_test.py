@@ -27,13 +27,15 @@ class ParsingTest(unittest.TestCase):
         self.assertTrue(str(definition.ca.items['rules'][2].value).startswith("#[append]{rbac.extraClusterRoleRules}"))
 
         tags = self.gryml.extract_tags(body)
-        result_values = self.gryml.process(definition, tags, definition.lc.line)
+        result_values = self.gryml.process(definition, dict(tags=tags, offset=definition.lc.line))
 
         self.assertIsInstance(result_values, dict)
 
     def test_expressions_raw(self):
         values_file = Path('../fixtures/next/values.yaml')
-        self.gryml.load_values(values_file)
+        values = self.gryml.load_values(values_file)
+        self.gryml.set_values(values)
+
         self.assertIsInstance(self.gryml.eval('badValue'), Undefined)
         self.assertEqual("grafana", self.gryml.eval('chart.app'))
         self.assertEqual(2, self.gryml.eval('chart.labels.release + 1'))
@@ -52,5 +54,5 @@ class ParsingTest(unittest.TestCase):
         directory, body, definition = next(stream)
         tags = self.gryml.extract_tags(body)
 
-        result_values = self.gryml.process(definition, tags, definition.lc.line)
+        result_values = self.gryml.process(definition, dict(tags=tags, offset=definition.lc.line))
         self.gryml.print(result_values)
