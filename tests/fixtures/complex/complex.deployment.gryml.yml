@@ -33,5 +33,5 @@ spec:
               value: "Such a sweet sorrow"
 
         - name: application-third #{"secondary-$(name)-$(role)-container"|s}
-          image: image #{"image3~":"~tag}
+          image: image #{image3 ~ ":" ~ tag}
 

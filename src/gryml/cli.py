@@ -38,22 +38,18 @@ def dispatch(parsed):
         for source in sources:
             gryml.load_values(source, values, True, True, True, True)
 
-    #
-    # if parsed.set:
-    #     # TODO: negative cases and tests
-    #     deep_merge(values, gryml.parse_values(parsed.set))
-    #
-    # if parsed.path:
-    #     sources.append(parsed.path)
-    #
-    # for source in sources:
-    #     gryml.load_values(source, values, True, True, True, True)
-    #
-    #     print_definition(it)
-    #     if parsed.echo:
-    #         print('===', file=sys.stderr)
-    #         print(path, file=sys.stderr)
-    #         print_definition(it, sys.stderr)
+    if parsed.set:
+        # TODO: negative cases and tests
+        deep_merge(gryml.values, gryml.parse_values(parsed.set))
+
+    if parsed.path:
+        gryml.sources.append(parsed.path)
+
+    for path, result in gryml.process_sources():
+        if parsed.echo:
+            print('===', file=sys.stderr)
+            print(path, file=sys.stderr)
+            print_definition(result, sys.stderr)
 
 
 def init_parser():

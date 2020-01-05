@@ -31,7 +31,7 @@ class Gryml:
         self.output = output or StringIO()
         self.env = Environment(undefined=SilentUndefined)
         self.yaml = YAML(typ=['safe', 'rt'])
-        self.path = None
+        self.path = Path('.')
 
         self.sources = []
 
@@ -310,6 +310,7 @@ class Gryml:
                 result = self.process(it, dict(tags=sub_tags, values=self.values, offset=it.lc.line, mutable=False))
                 self.output.write('---\n')
                 self.yaml.dump(result, self.output)
+                yield sub_path, result
 
     def process_first_definition(self, definition_file, values=None):
         if values is None:
