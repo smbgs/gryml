@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 
 from ruamel.yaml.comments import CommentedMap
 
@@ -10,6 +11,7 @@ class ParsingTest(unittest.TestCase):
 
     def setUp(self):
         self.parser = init_parser()
+        self.path = Path(__file__).parent.resolve()
 
         self.values = {
             'api-version': {

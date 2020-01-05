@@ -58,18 +58,23 @@ def repeat_value(core, old_value, strat_expression, value_expression, context):
     context['value_repeated'] = True
     context['value_used'] = False
 
-    # TODO: this is not pure
-    result = context['list']  # type: list
+    i_key = 'i'
+    it_key = 'it'
+
+    if strat_expression:
+        i_key, it_key = str(strat_expression).strip().split(":")
 
     for i, it in enumerate(iterable):
-        # TODO: custom context values names
         updated = core.process(deepcopy(old_value), context=dict(
             tags=context['tags'],
-            values=dict(
-                i=i,
-                it=it
-            )))
-        result.append(updated)
+            values={
+                **context['values'],
+                i_key: i,
+                it_key: it
+            }))
+
+        # TODO: we might wanna rethink how this is implemented and return the mutator in the context
+        context['list'].append(updated)
 
     return None
 

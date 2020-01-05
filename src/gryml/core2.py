@@ -32,6 +32,9 @@ class Gryml:
         self.env = Environment(undefined=FriendlyUndefined)
         self.yaml = YAML(typ=['safe', 'rt'])
 
+        # TODO: this needs to be adjustable from decorator
+        self.skip_nested_processing_strats = {'repeat'}
+
         # TODO: separate
         self.env.filters['randstr'] = \
             lambda n: ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(n))
@@ -146,9 +149,7 @@ class Gryml:
     def apply_strategy(self, name, old_value, strat_expression, value_expression, context):
         return Strategies.apply(name, self, old_value, strat_expression, value_expression, context)
 
-    def apply_value(self, target, context):
-
-        value = target
+    def get_rules(self, target, context):
 
         line = context.get('line')
         tags = context.get('tags')
@@ -156,6 +157,8 @@ class Gryml:
         rules = []
         comment = tags.get(line)
         if comment:
+
+            # Skipping line comments for list items which are not also dicts
             if not context.get('is_list_item') or not isinstance(target, dict):
                 rules.extend(comment)
 
@@ -167,9 +170,14 @@ class Gryml:
             offset += 1
             above_comment = tags.get(line - offset)
 
+        return rules
+
+    def apply_rules(self, target, context, rules):
+
+        value = target
+
         context['value_used'] = True
         context['may_repeat'] = True
-
         context['rules'] = rules
 
         for rule in rules:
@@ -187,6 +195,11 @@ class Gryml:
         values = context.get('values', {}) if context else {}
         mutable = context.get('mutable', False) if context else False
         line = context.setdefault('line', 0) if context else 0
+
+        rules = self.get_rules(result, context) # type: list
+
+        if any(rule['strat'] in self.skip_nested_processing_strats for rule in rules):
+            return self.apply_rules(result, context, rules)
 
         if isinstance(target, dict):
             result = CommentedMap()
@@ -245,7 +258,7 @@ class Gryml:
                 target.clear()
                 target.extend(result)
 
-        return self.apply_value(result, context)
+        return self.apply_rules(result, context, rules)
 
     def iterate_definitions(self, definition_file):
         for directory, body, definition, offset in self.iterate_path(Path(definition_file)):

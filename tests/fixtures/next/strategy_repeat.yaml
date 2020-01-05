@@ -1,0 +1,51 @@
+
+simple_list:
+
+  - basic_value
+
+  #[repeat]{ [1] * 3 }
+  - repeated_value
+
+  #[repeat]{ [1] * 2 }
+  - repeated_value2
+
+  - some_other_value
+
+
+dict_list:
+
+  #[repeat]{ [1, 2, 3] } // Repeating with custom values
+  - name: some_name   #{"name is " ~ it}
+    value: some_value #{i}
+    extra: some_extra #{"index-" ~ i ~ "-with-value-" ~ it}
+
+  # Always include this
+  - name: static_name
+    value: static_value
+    extra: extra_value
+
+  #[if false]
+  #[repeat]{ [4, 5, 6] }
+  - name: false_name
+    value: false_value
+    extra: false_value
+
+conditional_inside:
+
+  #[repeat]{ [1, 2, 3] }
+  - name: root_level #{"root-" ~ i}
+    value: same
+
+    #[if i % 2 == 0]
+    conditional: "?" #{ "will_be_when_id_is_even" }
+
+nested_config:
+
+  #[repeat]{ [1, 2, 3] }
+  - name: root_level #{"root-" ~ i}
+    value: same
+    nested:
+
+      #[repeat k:v]{ [ 3, 4 ] }
+      - name: nested_level #{"nested-" ~ i ~ "-" ~ k}
+        value: v #{v}

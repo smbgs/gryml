@@ -8,7 +8,8 @@ class ParsingTest(unittest.TestCase):
 
     def setUp(self):
         self.gryml = Gryml()
-        definition_file = Path('../fixtures/next/strategy_if.yaml')
+        self.path = Path(__file__).parent.resolve()
+        definition_file = self.path / '../fixtures/next/strategy_if.yaml'
         self.res = self.gryml.process_first_definition(definition_file)
         self.gryml.print(self.res)
 
