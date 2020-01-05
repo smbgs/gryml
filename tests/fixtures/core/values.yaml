@@ -1,5 +1,18 @@
-$gryml-values-before:
-  - base_values.yaml
+gryml:
+
+  include:
+    - base_values.yaml
+
+  settings:
+    useSomeOutput: false
+    derivedSetting: $ #{not gryml.settings.useSomeOutput}
+
+  override:
+    - some_more_values.yaml
+
+  output:
+    - some.yaml #[if gryml.settings.useSomeOutput]
+    - tag_placement.yaml
 
 chart:
   app: grafana
@@ -66,14 +79,4 @@ admin:
 
 envRenderSecret:
   key: value
-
-$gryml-values-after:
-  - some_more_values.yaml
-
-$gryml-sources:
-
-  #[if false]
-  - some.yaml
-
-  - tag_placement.yaml
 

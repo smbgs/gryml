@@ -100,11 +100,15 @@ class Gryml:
             rd.seek(0)
             before_values = CommentedMap(base_values if base_values else {})
 
-            loadable_before = values.pop('$gryml-values-before', [])
+            gryml = values.get('gryml', {})
+
+            loadable_before = gryml.get('include', [])
 
             if load_nested:
                 for it in loadable_before:
-                    before_values.update(self.load_values(path.parent.resolve() / it, base_values, process, load_nested, load_sources))
+                    before_values.update(
+                        self.load_values(path.parent.resolve() / it, base_values, process, load_nested, load_sources)
+                    )
 
             if process:
                 tags = self.extract_tags(rd, 0)
@@ -113,13 +117,15 @@ class Gryml:
                 before_values.update(values)
                 values = before_values
 
-            loadable_after = values.pop('$gryml-values-after', [])
-            loadable_sources = values.pop('$gryml-sources', [])
+            loadable_after = gryml.get('override', [])
+            loadable_sources = gryml.pop('output', [])
 
             if load_nested:
                 after_values = CommentedMap()
                 for it in loadable_after:
-                    after_values.update(self.load_values(path.parent.resolve() / it, values, process, load_nested, load_sources))
+                    after_values.update(
+                        self.load_values(path.parent.resolve() / it, values, process, load_nested, load_sources)
+                    )
 
                 values.update(after_values)
 
