@@ -1,15 +1,14 @@
 import unittest
 
-from gryml.cli import init_parser
-from gryml.core import load, process
+from gryml.core import Gryml
 
 
 class ValuesPipesTest(unittest.TestCase):
 
     def setUp(self):
-        self.parser = init_parser()
+        self.gryml = Gryml()
         self.values = {
-            'api-version': {
+            'apiVersion': {
                 'deployment': 'apps/v1'
             },
             'application': {
@@ -20,7 +19,7 @@ class ValuesPipesTest(unittest.TestCase):
                 'labels': {
                     'app': 'app-name1',
                 },
-                'service-account': 'demo',
+                'serviceAccount': 'demo',
                 'priorityClassName': 'tooooolong'
             },
             'build': {
@@ -30,19 +29,16 @@ class ValuesPipesTest(unittest.TestCase):
         }
 
     def test_simple_pipe_length(self):
-        _, it = next(load('fixtures/complex/pipes.deployment.gryml.yml'))
-        process(it, self.values)
+        it = self.gryml.process_first_definition('fixtures/complex/pipes.deployment.gryml.yml', self.values)
         self.assertEqual(64, len(it['metadata']['name']))
 
     def test_simple_pipe_limit(self):
-        _, it = next(load('fixtures/complex/pipes.deployment.gryml.yml'))
-        process(it, self.values)
+        it = self.gryml.process_first_definition('fixtures/complex/pipes.deployment.gryml.yml', self.values)
         spec = it['spec']['template']['spec']
         self.assertEqual(4, len(spec['serviceAccountName']))
         self.assertEqual(5, len(spec['priorityClassName']))
 
     def test_complex_limit(self):
-        _, it = next(load('fixtures/complex/pipes.deployment.gryml.yml'))
-        process(it, self.values)
+        it = self.gryml.process_first_definition('fixtures/complex/pipes.deployment.gryml.yml', self.values)
         container = it['spec']['template']['spec']['containers'][0]
         self.assertEqual('main-app-nameap-master-container', container['name'])

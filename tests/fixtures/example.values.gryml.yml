@@ -13,7 +13,7 @@ image:
 requests:
   replicas: 2
 
-service-account-name: 'custom-service-account'
+serviceAccount-name: 'custom-serviceAccount'
 
 container:
   port: 89

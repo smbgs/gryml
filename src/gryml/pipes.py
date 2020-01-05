@@ -23,7 +23,7 @@ Pipes.pipe('lowercase', lambda v: str(v).lower())
 Pipes.pipe('limit', lambda v, length: str(v)[:int(length)])
 
 
-@Pipes.pipe('k8s-name')
+@Pipes.pipe('k8sName')
 def k8s_name(v):
     max_len = 64
     if len(v) > max_len:

@@ -1,18 +1,17 @@
 import unittest
 from pathlib import Path
 
-from gryml.core2 import Gryml
+from gryml.core import Gryml
 
 
-class ParsingTest(unittest.TestCase):
+class StrategyRepeatTest(unittest.TestCase):
 
     def setUp(self):
         self.gryml = Gryml()
         self.path = Path(__file__).parent.resolve()
 
-        definition_file = self.path / '../fixtures/next/strategy_repeat.yaml'
+        definition_file = self.path / '../fixtures/core/strategy_repeat.yaml'
         self.res = self.gryml.process_first_definition(definition_file)
-        # self.gryml.print(self.res)
 
     def test_basics(self):
         simple_list = self.res.get('simple_list')  # type: list
@@ -39,9 +38,9 @@ class ParsingTest(unittest.TestCase):
 
         for i, it in enumerate(conditional_inside):
             if i % 2 == 0:
-                self.assertIn("will_be_when_id_is_even", it)
+                self.assertIn("conditional", it)
             else:
-                self.assertNotIn("will_be_when_id_is_even", it)
+                self.assertNotIn("conditional", it)
 
     def test_nested(self):
         nested_config = self.res.get('nested_config')  # type: list

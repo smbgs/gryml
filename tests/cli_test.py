@@ -1,8 +1,7 @@
 import unittest
 from argparse import Namespace
 
-from gryml.cli import init_parser
-from gryml.core import dispatch
+from gryml.cli import init_parser, dispatch
 
 
 class CLITest(unittest.TestCase):

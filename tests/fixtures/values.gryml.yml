@@ -7,7 +7,7 @@ image: 'custom-image'
 tag: 'latest'
 
 replicas: 2
-service-account-name: 'custom-service-account'
+serviceAccount-name: 'custom-serviceAccount'
 
 env:
   common:

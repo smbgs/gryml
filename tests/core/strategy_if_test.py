@@ -1,15 +1,15 @@
 import unittest
 from pathlib import Path
 
-from gryml.core2 import Gryml
+from gryml.core import Gryml
 
 
-class ParsingTest(unittest.TestCase):
+class StrategyIfTest(unittest.TestCase):
 
     def setUp(self):
         self.gryml = Gryml()
         self.path = Path(__file__).parent.resolve()
-        definition_file = self.path / '../fixtures/next/strategy_if.yaml'
+        definition_file = self.path / '../fixtures/core/strategy_if.yaml'
         self.res = self.gryml.process_first_definition(definition_file)
         self.gryml.print(self.res)
 

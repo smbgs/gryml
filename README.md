@@ -159,7 +159,7 @@ spec:
         application: "application" #{name}
 
     spec:
-      serviceAccountName: serviceAccount #{service-account-name}
+      serviceAccountName: serviceAccount #{serviceAccount-name}
       containers:
         - name: application-main #{main-{name}-{role}-container}
           image: image #{{image}:{tag}}
@@ -193,7 +193,7 @@ image: 'custom-image'
 tag: 'latest'
 
 replicas: 2
-service-account-name: 'custom-service-account'
+serviceAccount-name: 'custom-serviceAccount'
 
 env:
   common:

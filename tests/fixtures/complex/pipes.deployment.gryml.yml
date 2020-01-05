@@ -1,7 +1,7 @@
 apiVersion: apps/v1 #{apiVersion.deployment}
 kind: Deployment
 metadata:
-  name: "application" #{"prefix-$(application.name)-suffix"|k8sName}
+  name: "application" #{"prefix-$(application.name)-suffix"|s|k8sName}
   labels: [] #{application.labels}
 spec:
   replicas: 1 #{application.replicas}
@@ -16,9 +16,9 @@ spec:
         application: "application" #{application.name}
 
     spec:
-      serviceAccountName: serviceAccount #{application.service-account|limit(20)}
+      serviceAccountName: serviceAccount #{application.serviceAccount|limit(20)}
       priorityClassName: some #{application.priorityClassName|limit(5)}
       containers:
-        - name: application-main #{"main-$(application.name|limit 10)-$(application.role|lowercase)-container"|s}
+        - name: application-main #{("main-" ~ application.name|limit(10) ~ "-" ~ application.role|lowercase ~ "-container")|k8sName}
           image: image #{"$(build.image):$(build.tag)"|s}
 

@@ -5,7 +5,7 @@ from jinja2 import Undefined
 from ruamel.yaml.comments import CommentedMap
 
 from gryml.cli import init_parser
-from gryml.core2 import Gryml
+from gryml.core import Gryml
 
 
 class ParsingTest(unittest.TestCase):
@@ -16,7 +16,7 @@ class ParsingTest(unittest.TestCase):
         self.gryml = Gryml()
 
     def test_iterate_path(self):
-        definition_file = self.path / '../fixtures/next/tag_placement.yaml'
+        definition_file = self.path / '../fixtures/core/tag_placement.yaml'
         stream = self.gryml.iterate_path(Path(definition_file))
         directory, body, definition, offset = next(stream)
 
@@ -30,7 +30,7 @@ class ParsingTest(unittest.TestCase):
         self.assertIsInstance(result_values, dict)
 
     def test_expressions_raw(self):
-        values_file = self.path / '../fixtures/next/values.yaml'
+        values_file = self.path / '../fixtures/core/values.yaml'
         values = self.gryml.load_values(values_file)
         self.gryml.set_values(values)
 
@@ -42,8 +42,8 @@ class ParsingTest(unittest.TestCase):
         self.assertEqual(True, self.gryml.eval('not badValue'))
 
     def test_expressions_during_processing(self):
-        definition_file = self.path / '../fixtures/next/tag_placement.yaml'
-        values_file = self.path / '../fixtures/next/values.yaml'
+        definition_file = self.path / '../fixtures/core/tag_placement.yaml'
+        values_file = self.path / '../fixtures/core/values.yaml'
 
         stream = self.gryml.iterate_path(Path(definition_file))
         values = self.gryml.load_values(values_file)

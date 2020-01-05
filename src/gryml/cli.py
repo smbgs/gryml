@@ -3,8 +3,57 @@
 import argparse
 
 import sys
+from ruamel.yaml import YAML
 
-from gryml.core import dispatch
+from gryml.core import Gryml
+
+
+def print_definition(it, pipe=sys.stdout):
+    print('---', file=pipe)
+    yaml = YAML()
+    yaml.dump(it, pipe)
+
+
+def deep_merge(values, new_values):
+    # TODO: this is very simplistic, ignores lists
+    #  also it might be worth it to use strategies here
+    for k, v in new_values.items():
+        if isinstance(v, dict):
+            deep_merge(values[k], v)
+        else:
+            values[k] = v
+
+
+def dispatch(parsed):
+    values = {}
+    sources = []
+
+    gryml = Gryml(sys.stdout)
+
+    if parsed.with_values:
+        # TODO: negative cases and tests
+        values.update(gryml.parse_values(parsed.with_values))
+
+    if parsed.values_file:
+        for source in sources:
+            gryml.load_values(source, values, True, True, True, True)
+
+    #
+    # if parsed.set:
+    #     # TODO: negative cases and tests
+    #     deep_merge(values, gryml.parse_values(parsed.set))
+    #
+    # if parsed.path:
+    #     sources.append(parsed.path)
+    #
+    # for source in sources:
+    #     gryml.load_values(source, values, True, True, True, True)
+    #
+    #     print_definition(it)
+    #     if parsed.echo:
+    #         print('===', file=sys.stderr)
+    #         print(path, file=sys.stderr)
+    #         print_definition(it, sys.stderr)
 
 
 def init_parser():
@@ -25,10 +74,11 @@ def init_parser():
         '--set', action='append', help='Additional values that will override the final values'
     )
 
-    arg_parser.add_argument(
-        '--preserve-comments', default=False, action='store_true',
-        help='Flag that controls if the yaml comments should be preserved in the output'
-    )
+    # TODO: this flag is not supported in gryml yet
+    # arg_parser.add_argument(
+    #     '--preserve-comments', default=False, action='store_true',
+    #     help='Flag that controls if the yaml comments should be preserved in the output'
+    # )
 
     arg_parser.add_argument(
         '--echo', default=False, action='store_true',
