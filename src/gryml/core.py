@@ -153,8 +153,8 @@ class Gryml:
 
         elif path.is_dir():
             for sub_dir in path.iterdir():
-                for sub_path, output, it in self.iterate_path(sub_dir):
-                    yield sub_path, output, it
+                for sub_path, output, it, stating_pos in self.iterate_path(sub_dir):
+                    yield sub_path, output, it, stating_pos
 
     def extract_tags(self, body, offset):
         result_comments = {}

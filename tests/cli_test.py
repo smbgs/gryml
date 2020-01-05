@@ -30,3 +30,15 @@ class CLITest(unittest.TestCase):
         setattr(self.namespace, 'echo', False)
 
         dispatch(self.namespace)
+
+    def test_custom_values(self):
+
+        setattr(self.namespace, 'path', 'fixtures/complex/complex.deployment.gryml.yml')
+        setattr(self.namespace, 'values_file', 'fixtures/values.gryml.yml')
+
+        setattr(self.namespace, 'set', ['test.a=1'])
+        setattr(self.namespace, 'with_values', None)
+        setattr(self.namespace, 'preserve_comments', True)
+        setattr(self.namespace, 'echo', False)
+
+        dispatch(self.namespace)
