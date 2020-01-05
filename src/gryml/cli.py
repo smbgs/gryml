@@ -1,11 +1,18 @@
 #!/usr/bin/python3
 
 import argparse
+import logging
+from pathlib import Path
 
+import colorlog
 import sys
 from ruamel.yaml import YAML
 
 from gryml.core import Gryml
+
+handler = colorlog.StreamHandler()
+handler.setFormatter(colorlog.ColoredFormatter('%(log_color)s%(levelname)s:%(name)s:%(message)s'))
+logging.getLogger().addHandler(handler)
 
 
 def print_definition(it, pipe=sys.stdout):
@@ -28,7 +35,6 @@ def deep_merge(values, new_values):
 
 def dispatch(parsed):
     values = {}
-    sources = []
 
     gryml = Gryml(sys.stdout)
 
@@ -37,8 +43,7 @@ def dispatch(parsed):
         values.update(gryml.parse_values(parsed.with_values))
 
     if parsed.values_file:
-        for source in sources:
-            gryml.load_values(source, values, True, True, True, True)
+        gryml.load_values(Path(parsed.values_file), values, True, True, True, True)
 
     if parsed.set:
         # TODO: negative cases and tests

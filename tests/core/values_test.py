@@ -5,10 +5,10 @@ from pathlib import Path
 from gryml.core import Gryml
 
 
-class ParsingTest(unittest.TestCase):
+class ValueLoadingTest(unittest.TestCase):
 
     def setUp(self):
-        self.gryml = Gryml(sys.stdout)
+        self.gryml = Gryml()
         self.path = Path(__file__).parent.resolve()
 
     def test_value_processing(self):
@@ -29,9 +29,12 @@ class ParsingTest(unittest.TestCase):
         self.assertNotIn('some.yaml', values['gryml']['output'])
         self.assertIn('tag_placement.yaml', values['gryml']['output'])
 
-    def test_auto_load(self):
+    def test_auto_process(self):
         values_file = self.path / '../fixtures/core/values.yaml'
         values = self.gryml.load_values(values_file, process=True, load_nested=True, mutable=True, load_sources=True)
 
+        all(self.gryml.process_sources())
+
         # TODO: asserts, now it's just a smoke test
         self.assertIsNotNone(values)
+        self.assertGreater(self.gryml.output.tell(), 1)

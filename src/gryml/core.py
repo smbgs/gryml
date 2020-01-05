@@ -101,7 +101,6 @@ class Gryml:
             before_values = CommentedMap(base_values if base_values else {})
 
             gryml = values.get('gryml', {})
-
             loadable_before = gryml.get('include', [])
 
             if load_nested:
@@ -113,12 +112,12 @@ class Gryml:
             if process:
                 tags = self.extract_tags(rd, 0)
                 before_values.update(values)
-                values = self.process(values, dict(tags=tags, values=before_values, mutable=mutable))
+                values = self.process(values, dict(tags=tags, values=before_values, mutable=mutable, path=path))
                 before_values.update(values)
                 values = before_values
 
             loadable_after = gryml.get('override', [])
-            loadable_sources = gryml.pop('output', [])
+            loadable_sources = gryml.get('output', [])
 
             if load_nested:
                 after_values = CommentedMap()
@@ -180,12 +179,14 @@ class Gryml:
             return Strategies.apply(name, self, old_value, strat_expression, value_expression, context)
         except Exception as e:
             self.logger.error(
-                "Unable to apply the `%s` strategy on line %s evaluating expression: `%s`\n"
-                "Reason: %s",
+                "Unable to apply the `%s` strategy while evaluating expression: `%s`\n"
+                "Reason: %s\n"
+                "File: %s (line: %s)\n",
                 name,
-                context.get('line'),
                 strat_expression or value_expression,
-                e
+                e,
+                Path(context.get('path')).resolve(),
+                context.get('line'),
             )
 
     @staticmethod
@@ -231,6 +232,8 @@ class Gryml:
     def process(self, target, context=None):
 
         result = target
+
+        path = context.get('path') if context else None
         tags = context.get('tags', {}) if context else {}
         values = context.get('values', {}) if context else {}
         mutable = context.get('mutable', False) if context else False
@@ -250,6 +253,7 @@ class Gryml:
                     continue
 
                 ctx = {
+                    'path': path,
                     'tags': tags,
                     'values': values,
                     'mutable': mutable,
@@ -276,6 +280,7 @@ class Gryml:
             setattr(result, LineCol.attrib, target.lc)
             for k, v in enumerate(target):
                 ctx = {
+                    'path': path,
                     'tags': tags,
                     'values': values,
                     'mutable': mutable,
@@ -305,15 +310,21 @@ class Gryml:
         if values is None:
             values = self.values
 
-        for directory, body, definition, offset in self.iterate_path(Path(definition_file)):
+        for path, body, definition, offset in self.iterate_path(Path(definition_file)):
             tags = self.extract_tags(body, offset)
-            yield self.process(definition, dict(tags=tags, values=values))
+            yield self.process(definition, dict(tags=tags, values=values, path=path))
 
     def process_sources(self):
         for source_path in self.sources:
             for sub_path, output, it, offset in self.iterate_path(self.path.parent.resolve() / source_path):
                 sub_tags = self.extract_tags(output, offset)
-                result = self.process(it, dict(tags=sub_tags, values=self.values, offset=it.lc.line, mutable=False))
+                result = self.process(it, dict(
+                    tags=sub_tags,
+                    values=self.values,
+                    offset=it.lc.line,
+                    mutable=False,
+                    path=sub_path,
+                ))
                 self.output.write('---\n')
                 self.yaml.dump(result, self.output)
                 yield sub_path, result
