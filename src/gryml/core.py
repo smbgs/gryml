@@ -6,7 +6,6 @@ from datetime import datetime
 from io import StringIO
 from pathlib import Path
 
-import sys
 from jinja2 import Environment
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq, LineCol
@@ -105,8 +104,8 @@ class Gryml:
 
             if load_nested:
                 for it in loadable_before:
-                    before_values.update(
-                        self.load_values(path.parent.resolve() / it, base_values, process, load_nested, load_sources)
+                    before_values.update(self.load_values(
+                        path.parent.resolve() / it, base_values, process, mutable, load_nested, load_sources)
                     )
 
             if process:
