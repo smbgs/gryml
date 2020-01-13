@@ -37,7 +37,7 @@ data: #[append]{configs} #TODO: nested ini templates?
         {{ $value.url }}
       {% else %}
         https://grafana.com/api/dashboards/{{ value.gnetId }}/revisions/{{ value.revision or 1 }}/download
-        {{ value.datasource ? "| sed 's|\"datasource\":[^,]*|\"datasource\": \"{{ $value.datasource }}\"|g'" }}
+        {{ value.datasource ? "| sed 's|\"datasource\":[^,]*|\"datasource\": \"{{ value.datasource }}\"|g'" }}
         {{ value.b64content ? "| base64 -d" }} \
       > /var/lib/grafana/dashboards/{{ provider }}/{{ key }}.json
       {% endfor %}

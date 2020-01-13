@@ -12,8 +12,4 @@ rules: #[append]{rbac.extraClusterRoleRules}
     resources: ["configmaps", "secrets"]
     verbs: ["get", "watch", "list"]
 
-  #[if sidecar.dashboards or sidecar.datasources2]
-  - apiGroups: [""] # "" indicates the core API group
-    resources: ["configmaps", "secrets"]
-    verbs: ["get", "watch", "list"]
 

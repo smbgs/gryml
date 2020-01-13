@@ -12,7 +12,8 @@ metadata:
   is_456: 1 #[if true]{"456"}[else]{"xxx"}
 
   #[merge]{chart.labels}
-  labels: {} #[merge]{chart.annotations}
+  #[merge]{chart.annotations}
+  labels: {}
 
   random: random #{10|randstr}
   #  Some stupid comments in between

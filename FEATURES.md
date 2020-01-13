@@ -10,7 +10,38 @@ Core functionality of Gryml. Ability to save the original syntax and structure o
 comments ("com-tags") for templating. Com-tags are defined as `#[value-strategy argument]{expression}`, where all
 parts are optional.
 
+Com-tags can be used at the end of the line:
 
+```yaml
+key: default_value #{new_value}
+```
+
+Com-tags can also be used above the line:
+
+```yaml
+#[if value]
+key: value
+```
+
+Multiple com-tags can be applied (without empty lines): 
+
+```yaml
+#[if value]
+#[map value]
+key: value
+```
+
+### Expressions
+
+**Status:** alpha
+
+**Details:**
+Com-tags may use expressions based on the Jinja 2 expression engine. Values tree can be used
+in the expressions. 
+
+Example:
+
+- `{some.value == other.value and (third.value <= 10)}`
 
 ### CLI Values
 
@@ -26,55 +57,70 @@ in the value tree.
 
 **Details:** 
 Ability to define the value tree in the additional yaml file.  
-Com-tags are also immediately evaluated upon declaration.
+Com-tags are also immediately evaluated upon declaration in the values files allowing for complex
+implementation scenarios.
 
 ### Values file "gryml" object
 
 **Status:** beta
 
+**Details:** 
+Additional meta-data may be defined in the values file with the key: `gryml`. 
+More features define their own keys in the `gryml` object.
 
-
-### Nested values files Including
+### Nested values files including
  
 **Status:** beta
 
 **Details:** Ability to import additional value files before importing values file. Uses the current
 values tree and supports com-tags in values files. 
 
-Syntax applies to the values files, root level: 
+Gryml object field `"include"`:
  
 - `gryml.include: [<yaml-file-path>]`
 
-### Nested Values Files Overrides
+### Nested values files overrides
  
 **Status:** beta
+
+**Details:** 
+Similar to the "Nested values files including" but applies after the all com-tags in the values
+file were calculated.
+
+Gryml object field `"override"`:
 
 - `gryml.override: [<value-file-path>, ...]`
 
   
-### Nested YAML Files Importing 
+### Output files  
  
-**Status:** needs minor rework
+**Status:** beta
 
-**Details:** Ability to add more YAML files for processing and output from values files. 
+**Details:** 
+This feature helps to implement complex dependency graphs. Single values file may be used to
+"output" multiple files using the same values tree in the com-tags for all of them.
 
+Depending on dynamic conditions, additional yaml files can be either included or excluded from
+the output.
 
-### Nested Values Templating 
- 
-**Status:** needs rework
+In combination with the *"Nested values files including"* feature it's possible to implement
+robust dynamic "chart"-like configurations.
 
-**Details:** Ability to dynamically apply values tree in com-tags during the processing of the values files.
+Gryml object field `"output"`:
 
-### Value expressions in strategies and values
+- `gryml.outut: [<yaml-file-path>, ...]`
+
+### File path prefixes
 
 **Status:** draft
-**Details:** Ability to safely evaluate simple logical expressions with values in places where values can be used 
 
-- `{some.value == other.value and (third.value <= 10)}`
+**Details:** 
+Ability to define and use `@<prefix>/path/to/file.yaml` in addition to relative and absolute
+paths for value files including, overrides and output files.  
 
 ### Conditional strategies 
 
-**Status:** draft
+**Status:** beta
 
 **Details:** Ability to use if/else conditions to remove parts of the YAML file.  
 
@@ -94,12 +140,6 @@ Generates 2 arguments with the provided index and value (if the value is object 
 - name: default-value #{$key}
   data: some-data #{$value}
 ```  
-
-### Multiline com-tags
-
-**Status:** draft
-
-**Details:** Ability to use multiple com-tags that will be sequentially applied to the target 
 
 ### Inline templating
 
@@ -122,13 +162,20 @@ data: |
 
 ### Value pipes
 
-**Status:** needs improvements
+**Status:** alpha
 
-**Details:** Ability to use named functions with parameters to transform values
+**Details:**
+ Ability to use named functions with parameters to transform values
 
 `{value|base64e}` - encodes the value as base64 string  
 
-### Template Value pipes
+### Common value pipes
+
+**Status:** draft
+**Details:**
+ Ability to define dynamic value pipes as expressions in values files.
+
+### Template value pipes
 
 **Status:** draft
 
