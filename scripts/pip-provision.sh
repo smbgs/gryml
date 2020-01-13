@@ -14,4 +14,8 @@ $PYBASE/python setup.py sdist bdist_wheel
 
 $PYBASE/python -m twine upload --repository-url https://pypi.org/legacy/ dist/*
 
+rm -rf build
+rm -rf dist
+rm -rf gryml.egg-info
+
 echo "$TITLE done."
