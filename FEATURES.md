@@ -1,16 +1,56 @@
 
 # Gryml Features
 
-### Nested Values Files Importing 
+### Com-tags
+
+**Status:** alpha
+
+**Details:** 
+Core functionality of Gryml. Ability to save the original syntax and structure of the yaml file by using native yaml
+comments ("com-tags") for templating. Com-tags are defined as `#[value-strategy argument]{expression}`, where all
+parts are optional.
+
+
+
+### CLI Values
+
+**Status:** beta
+
+**Details:** 
+Ability to set multiple values with the following arguments: `--set a.b.c=value`, where "a.b.c" is the path to the value
+in the value tree. 
+
+### Values files 
+
+**Status:** beta
+
+**Details:** 
+Ability to define the value tree in the additional yaml file.  
+Com-tags are also immediately evaluated upon declaration.
+
+### Values file "gryml" object
+
+**Status:** beta
+
+
+
+### Nested values files Including
  
-**Status:** needs rework
+**Status:** beta
 
-**Details:** Ability to import additional value files before and after importing values file. Uses the current
-values tree and supports com-tags in values files.
+**Details:** Ability to import additional value files before importing values file. Uses the current
+values tree and supports com-tags in values files. 
 
-Syntax applies to the value files, root level:  
-- `$gryml-before: [<value-file-path>, ...]`  
-- `$gryml-afrer: [<value-file-path>, ...]`
+Syntax applies to the values files, root level: 
+ 
+- `gryml.include: [<yaml-file-path>]`
+
+### Nested Values Files Overrides
+ 
+**Status:** beta
+
+- `gryml.override: [<value-file-path>, ...]`
+
   
 ### Nested YAML Files Importing 
  
@@ -18,8 +58,6 @@ Syntax applies to the value files, root level:
 
 **Details:** Ability to add more YAML files for processing and output from values files. 
 
-Syntax applies to the values files, root level:  
-- `$gryml-sources: [<yaml-file-path>]`
 
 ### Nested Values Templating 
  
@@ -52,9 +90,9 @@ Syntax applies to the values files, root level:
 Generates 2 arguments with the provided index and value (if the value is object - index is the key)
 
 ```yaml
-#[repeat i:it]{value}
-- name: default-value #{$i}
-  data: some-data #{$it}
+#[repeat key:value]{value}
+- name: default-value #{$key}
+  data: some-data #{$value}
 ```  
 
 ### Multiline com-tags
