@@ -130,7 +130,7 @@ paths for value files including, overrides and output files.
 
 ### Repeat strategies & list-item com-tags
 
-**Status:** draft
+**Status:** alpha
 
 **Details:** Ability to repeat the list item with additional dynamic values from lists or objects.
 Generates 2 arguments with the provided index and value (if the value is object - index is the key)

@@ -1,15 +1,18 @@
 
 # Gryml
 
-## WARNING: this is the early development version not suitable for use by anyone!
+#### WARNING: Alpha version, might not be suitable for production 
+#### WARNING: API is unstable and might change significantly
 
-Sometimes you just need to substitute a couple of variables in the K8S resource definition.  
+Sometimes you just need to substitute a couple of variables in the K8S resource definitions, often using the same
+value in multiple files.   
 
 This tool was born as an attempt to bridge the gap between HELM and Kustomize as they both
-are lacking simplicity for trivial but common cases. 
-
-While Gryml was designed with k8s in mind it is essentially a general purpose YAML processor, and can be used to
+are lacking simplicity for trivial but common cases. But while Gryml was designed with k8s in mind it is essentially a general purpose YAML processor, and can be used to
 automate the generation of any yaml files when value substitution is needed.
+
+We provide [the full list of features](FEATURES.md) separately, but in this document we will cover the most important
+ones.  
 
 
 ## Basics
@@ -30,10 +33,10 @@ Lets look at the simple example:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: "application" #{app-{common.name}-suffix}
+  name: "application" #{"app" ~ common.name ~ "-suffix"}
 ``` 
 
-The `name` field with the default value `"application"` has the `#{app-{common.name}-suffix}` Gryml tag. 
+The `name` field with the default value `"application"` has the `#{"app-" ~ common.name ~ "-suffix"}` Gryml tag. 
 
 We can apply the value using the following command:
 
@@ -58,19 +61,19 @@ common use cases is the container environment variables.
 
 To facilitate that, Gryml provides "value strategies" that can be applied using the following tag syntax:
 
- `#[strategy]{value.path}`
+ `#[strategy <argument?>]{expression}`
  
  where supported `strategy` is one of the following:
  
  - `set` - (default) - replaces the whole value 
  - `append` - adds new array items to the existing array value
  - `merge-using <key>` - merges two array values containing objects using the values of the fields `<key>` in both 
-    collections to find and replace existing items 
-    
- - **More strategies are TBD**     
+    collections to find and replace existing items
+ - `if <expression>` - removes the value or item if expression evaluates as false      
+ - `repeat <key:value?>` - iterates over values from the `expression` and repeats the array items     
 
    
-## Value files
+### Value files
 
 If the configuration is complex in addition to `--set` flags Gryml supports `values file`. You can use the 
 `-f <path_to_values_file>` argument to use the YAML value file in combination with the `--set` arguments. Note that
@@ -81,46 +84,44 @@ configurations similar to HELM charts via `Gryml directives`.
 
 Gryml directives can be defined in the list with the key `"gryml"` in a values file.
 
-### Import directive
+### Importing other value files
 
-Import directive is defined as an object with the `"import"` key and a string value - a path to the additional 
-values file that will be also included (path can be relative to the values file or absolute). 
-
-Note that multiple `"import"` directives are supported.
-
-For example:
+It is possible to include additional values files using the `include` field of the `gryml` metadata object, 
+for example:
 
 ```yaml
 gryml:
- - import: "another.values.yml"
- - import: "/workspace/root.values.yml"
+ include: 
+  - "another.values.yml"
+  - "/workspace/root.values.yml"
 ```
 
-Note: Additional values files are imported **before** the current file and values are merged.   
+Note: Additional values files are imported **before** the current file and values are merged, you can use
+ `override` field of the `gryml` metadata object if you need to apply additional values **after** the current file was
+ evaluated.      
 
-Note: Gryml tags can also be used in the imported files (initial value tree can be setup using `--with` arguments that 
-are very similar to the `--set` arguments, but will be overwrote by the values files.). 
 
-### Source directive
+### Output
 
-Source directive is defined as an object with the `"source"` key and a string value - a path to the additional 
-yaml file that will be also processed and included in the output **after** all values files and `--set` arguments are 
+It is possible to reference yaml 
+yaml files that will be also processed and included in the output **after** all values files and `--set` arguments are 
 processed and a final value tree has been built. 
 
-Note that multiple `"source"` directives are supported.
+In combination with the `include` and `override` directives this allows different outputs to be generated from a single 
+codebase based on the different initial values files. Moreover, resource definitions can be logically organized into
+libraries and artifacts in a single or even multiple repositories and then combined together explicitly in a values file.
 
-In combination with the `import` directives this allows different outputs to be generated from a single codebase 
-based on the different initial values files. Moreover, resource definitions can be logically organized into libraries
-and artifacts in a single or even multiple repositories and then combined together explicitly in a values file. 
-
-This basically provides a way to generate "charts" dynamically, both significantly reducing the amount of duplicated
+This basically provides a way to generate "charts" dynamically, significantly reducing the amount of duplicated
 code between different resource definitions, while deriving the related parts from same values. 
 
 ### Value transformation pipes 
 
-TODO: describe value transformation pipes
+Gryml value expressions support Jinja2 filters (we call them value transformation pipes though). Gryml also
+defines a couple of additional pipes suitable for use with k8s.
 
-## Conditional values
+TODO: describe value transformation pipes more.
+
+### Conditional values
 
 Are not supported yet and might not be supported. We'd like to avoid conditional configuration as much as possible.
    
@@ -132,24 +133,21 @@ the release versions. It's unclear if we  will support this approach in future, 
 quality of life improvements for `kubectl` users.
 
 
+## Advanced example
 
-## Advanced examples
-
-### Value Strategies 
-
-Lets look at this `Deployment` definition with already added Gryml tags.
+Lets look at this `Deployment` definition with already added Gryml com-tags.
 
 `deployment.gryml.yml`
  
 ```yaml
-apiVersion: apps/v1 #{api-version.deployment}
+apiVersion: apps/v1 #{apiVersion.deployment}
 kind: Deployment
 metadata:
-  name: "application" #{prefix-{name}-suffix}
+  name: "application" #{"test-" ~ name ~ "-suffix"}
 spec:
-  replicas: 1 #{requests-replicas}
+  replicas: 1 #{replicas}
   strategy:
-    type: Recreate
+    type: Recreate #{strategy}
   selector:
     matchLabels:
       application: "application" #{name}
@@ -159,41 +157,58 @@ spec:
         application: "application" #{name}
 
     spec:
-      serviceAccountName: serviceAccount #{serviceAccount-name}
+      serviceAccountName: serviceAccount #{serviceAccountName}
       containers:
-        - name: application-main #{main-{name}-{role}-container}
-          image: image #{{image}:{tag}}
+        - name: main #{"main-" ~ roleContainerSuffix}
+          image: image #{imageRef}
 
           env: #[merge-using name]{env.common}
             - name: DEMO_GREETING
               value: "Hello from the environment"
             - name: DEMO_FAREWELL
               value: "Such a sweet sorrow"
-        - name: application-secondary #{secondary-{name}-{role}-container}
-          image: image #{{image2}:{tag}}
+        
+        #[if useSecondary]
+        - name: secondary #{"secondary-" ~ roleContainerSuffix}
+          image: image #{imageRef}
 
           env: #[append]{env.common}
             - name: DEMO_FAREWELL
               value: "Such a sweet sorrow"
 
-        - name: application-third #{secondary-{name}-{role}-container}
-          image: image #{{image3}:{tag}}
 ```  
  
- Now lets create the values file (this part is very similar to HELM):
- 
- `values.gryml.yml`
- 
- ```yaml
-api-version:
-  deployment: 'apps/v1'
+ Now lets create values files:
 
-name: 'custom-name',
+`base.gryml.yml`
+
+```yaml
+apiVersion:
+  deployment: 'apps/v1'
+```
+
+`values.gryml.yml`
+```yaml
+
+gryml:
+  include:
+    - base.gryml.yml
+
+  override:
+    - context.gryml.yml
+  
+  output:
+    - deployment.gryml.yml
+
+name: 'custom-name'
+role: 'test'
 image: 'custom-image'
 tag: 'latest'
 
+useSecondary: false
+
 replicas: 2
-serviceAccount-name: 'custom-serviceAccount'
+serviceAccountName: 'custom-serviceAccount'
 
 env:
   common:
@@ -203,15 +218,23 @@ env:
       value: "Hello from the custom environment"
 ```
 
+`context.gryml.yml`
+```yaml
+# Note: dynamic derived values are supported using the com-tags
+imageRef: = #{image ~ ":" ~ tag}
+roleContainerSuffix: = #{name ~ "-" ~ role ~ "-container"}
+```
 
-### Context variables
+Now you can just exec: `gryml -f values.gryml.yml`, as a result you should be able to see contents of the 
+`deployment.gryml.yml` file with the substituted values.
 
-TODO: implement and describe derived context variables
+## Best practices
 
-### Local variables
-
-TODO: implement and describe local variables  
+- Avoid complex logic in the output yaml files and instead implement this logic in the values files
+- Separate configuration between multiple values files instead of combining it into a single one
 
 ## Library
 
-TBD: Gryml will be packaged and available via pypi.
+Gryml is now only available in the test pypi environment: 
+
+- `pip install -i https://test.pypi.org/simple/ gryml`
