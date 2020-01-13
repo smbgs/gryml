@@ -3,9 +3,12 @@ import setuptools
 with open("../README.md", "r") as fh:
     long_description = fh.read()
 
+with open("../VERSION.md", "r") as fh:
+    version = fh.read().strip()
+
 setuptools.setup(
     name="gryml",
-    version="0.20.01.a1",
+    version=version,
     author="Alexander Chichenin",
     author_email="admin@somebugs.com",
     description="Gryml YAML Processor",
@@ -27,7 +30,9 @@ setuptools.setup(
 
     python_requires='>=3.7',
     install_requires=[
-        'ruamel.yaml>=0.16.5'
+        'ruamel.yaml>=0.16.5',
+        'jinja2>=2.10.3',
+        'colorlog>=4.1.0',
     ],
 
     entry_points={
