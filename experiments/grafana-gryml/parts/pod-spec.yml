@@ -1,0 +1,311 @@
+parts:
+  podSpec:
+    schedulerName: ""      #[if]{schedulerName}
+    serviceAccountName: "" #[if]{grafana.serviceAccountName}
+    securityContext: {}    #[if]{securityContext}
+    priorityClassName: ""  #[if]{priorityClassName}
+    imagePullSecrets: []   #[if image.pullSecrets]{image.pullSecrets}
+
+    #[if persistence.enabled or dashboards or sidecar.datasources.enabled or extraInitContainers]
+    #[append]{extraInitContainers}
+    initContainers:
+
+      #[if persistence.enabled and initChownData.enabled]
+      - name: init-chown-data
+        image: image #{initChownData.image.repository ~ ":" ~ initChownData.image.tag}
+        imagePullPolicy: Always #{initChownData.image.pullPolicy}
+        securityContext:
+          runAsUser: 0
+
+        #{["chown", "-R", securityContext.runAsUser ~ ":" ~ securityContext.runAsUser, "/var/lib/grafana"]}
+        command: []
+
+        resources: {} #{initChownData.resources}
+        volumeMounts:
+          - name: storage
+            mountPath: "/var/lib/grafana"
+            subPath: "" #[if]{persistence.subPath}
+
+      #[if dashboards]
+      - name: download-dashboards
+        image: download #{downloadDashboardsImage.repository}:{downloadDashboardsImage.tag}
+        imagePullPolicy: Always #{downloadDashboardsImage.pullPolicy}
+        command: ["/bin/sh"]
+        args: [ "-c", "mkdir -p /var/lib/grafana/dashboards/default && /bin/sh /etc/grafana/download_dashboards.sh" ]
+
+        #[repeat]{dashboards.env}
+        env:
+          - name: name   #{k}
+            value: value #{it}
+
+        volumeMounts: #[append]{extraSecretMounts}
+          - name: config
+            mountPath: "/etc/grafana/download_dashboards.sh"
+            subPath: download_dashboards.sh
+          - name: storage
+            mountPath: "/var/lib/grafana"
+            subPath: "" #{persistence.subPath}
+
+      #[if sidecar.datasources.enabled]
+      - name: name #{chart.name ~ "-sc-datasources"}
+        image: "{{ .Values.sidecar.image }}"
+        imagePullPolicy: Always #{sidecar.imagePullPolicy}
+        env:
+          - name: METHOD
+            value: LIST
+          - name: LABEL
+            value: value #{sidecar.datasources.label}
+          - name: FOLDER
+            value: "/etc/grafana/provisioning/datasources"
+          - name: RESOURCE
+            value: "both"
+
+          #[if sidecar.datasources.searchNamespace]
+          - name: NAMESPACE
+            value: value #{sidecar.datasources.searchNamespace}
+
+          #[if sidecar.skipTlsVerify]
+          - name: SKIP_TLS_VERIFY
+            value: value #{sidecar.skipTlsVerify}
+
+        resources: {} #{sidecar.resources}
+
+        volumeMounts:
+          - name: sc-datasources-volume
+            mountPath: "/etc/grafana/provisioning/datasources"
+
+    containers: #[append]{extraContainers}
+
+      #[if sidecar.dashboards.enabled]
+      - name: dasboard #{chart.name ~ "-sc-dashboard"}
+        image: dashboard #{sidecar.image}
+        imagePullPolicy: Always #{sidecar.imagePullPolicy}
+        env:
+          - name: LABEL
+            value: value #{sidecar.dashboards.label}
+          - name: FOLDER
+            # TODO: this is definitely wrong
+            value: value #{sidecar.dashboards.folder ~ sidecar.dashboards.defaultFolderName ~ "/"}
+          - name: RESOURCE
+            value: "both"
+
+          #[if sidecar.dashboards.searchNamespace]
+          - name: NAMESPACE
+            value: value #{sidecar.dashboards.searchNamespace}"
+
+          #[if sidecar.skipTlsVerify]
+          - name: SKIP_TLS_VERIFY
+            value: value #{sidecar.skipTlsVerify}
+
+        resources: {} #{sidecar.resources}
+
+        volumeMounts:
+          - name: sc-dashboard-volume
+            mountPath: "" #{sidecar.dashboards.folder}
+
+      #[if chart.name]
+      - name: primary #{chart.name}
+        image: image #{image.repository}:{image.tag}"
+        imagePullPolicy: Always #{image.pullPolicy}
+        command: [] #{command}
+
+        ports:
+          - name: name #{service.portName}
+            containerPort: 3000 #{service.port}
+            protocol: TCP
+          - name: name #{podPortName}
+            containerPort: 3000
+            protocol: TCP
+
+        #[append]{extraConfigmapMounts}
+        #[append]{extraSecretMounts}
+        #[append]{extraVolumeMounts}
+        #[append]{extraEmptyDirMounts}
+        volumeMounts:
+          - name: config
+            mountPath: "/etc/grafana/grafana.ini"
+            subPath: grafana.ini
+
+          #[if ldap.enabled]
+          - name: ldap
+            mountPath: "/etc/grafana/ldap.toml"
+            subPath: ldap.toml
+
+          - name: storage
+            mountPath: "/var/lib/grafana"
+            subPath: "" #{persistence.subPath}
+
+          #[repeat]{dashboards}
+          - name: dashboards #{"dashboard-" ~ it}
+            mountPath: "/var/lib/grafana/dashboards/" #[append]{it ~ "/" ~ i ~ ".json"}
+            subPath: .json #{i ~ ".json"}
+
+          #[if dashboardsConfigMaps]
+          #[repeat]{dashboardsConfigMaps}
+          - name: dashboard #{"dashboard-" ~ it}
+            mountPath: "/var/lib/grafana/dashboards/" #[append]{i}
+
+          #[if datasources]
+          - name: config
+            mountPath: "/etc/grafana/provisioning/datasources/datasources.yaml"
+            subPath: datasources.yaml
+
+          #[if notifiers]
+          - name: config
+            mountPath: "/etc/grafana/provisioning/notifiers/notifiers.yaml"
+            subPath: notifiers.yaml
+
+          #[if dashboardProviders]
+          - name: config
+            mountPath: "/etc/grafana/provisioning/dashboards/dashboardproviders.yaml"
+            subPath: dashboardproviders.yaml
+
+          #[if sidecar.dashboards.enabled]
+          - name: sc-dashboard-volume
+            mountPath: "" #{sidecar.dashboards.folder}
+
+          #[if sidecar.dashboards.SCProvider]
+          - name: sc-dashboard-provider
+            mountPath: "/etc/grafana/provisioning/dashboards/sc-dashboardproviders.yaml"
+            subPath: provider.yaml
+
+          #[if sidecar.datasources.enabled]
+          - name: sc-datasources-volume
+            mountPath: "/etc/grafana/provisioning/datasources"
+
+        env:
+          #[if not env.GF_SECURITY_ADMIN_USER]
+          - name: GF_SECURITY_ADMIN_USER
+            valueFrom:
+              secretKeyRef:
+                name: name #[if]{smtp.existingSecret}[else]{chart.name}
+                key: key #[if]{smtp.userKey}[else]{"admin-user"}
+
+          #[if not env.GF_SECURITY_ADMIN_PASSWORD]
+          - name: GF_SECURITY_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: name #[if]{smtp.existingSecret}[else]{chart.name}
+                key: key #[if]{smtp.passwordKey}[else]{"admin-password"}
+
+          #[if not plugins]
+          - name: GF_INSTALL_PLUGINS
+            valueFrom:
+              configMapKeyRef:
+                name: name #{chart.name}
+                key: plugins
+
+
+          #[if smtp.existingSecret]
+          - name: GF_SMTP_USER
+            valueFrom:
+              secretKeyRef:
+                name: name #{smtp.existingSecret}
+                key: key #[if]{smtp.userKey}[else]{"user"}
+
+          #[if smtp.existingSecret]
+          - name: GF_SMTP_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: name #{smtp.existingSecret}
+                key: key #[if]{smtp.passwordKey}[else]{"password"}
+
+          # TODO: simple pipe to transpose maps to name-based arrays?
+          #[if]{env}
+          #[repeat]{env}
+          - name: = #{i}
+            value: = #{it}
+
+          #[if]{envValueFrom}
+          #[repeat]{envValueFrom}
+          - name: key #{i}
+            valueFrom: {} #{it}
+
+          #[if]{envFromSecret}
+          #[repeat]{envFromSecret}
+          - name: secret-key #{i}
+            valueFrom: {} #{it}
+
+          #[if]{envRenderSecret}
+          #[repeat]{envRenderSecret}
+          - name: render-secret-key #{i}
+            valueFrom: {} #{it}
+
+        envFrom:
+          # TODO: this looks weird
+          - secretRef:
+              name: secret-ref #{chart.name ~ "-env"}
+
+        livenessProbe: {} #{livenessProbe}
+        readinessProbe: {} #{readinessProbe}
+
+        resources: {} #{resources}
+
+    nodeSelector: {} #{nodeSelector}
+
+    affinity: {} #{affinity}
+    tolerations: [] #{tolerations}
+
+    #[append]{extraSecretMounts}
+    volumes:
+      - name: config
+        configMap:
+          name: name #{chart.name}
+
+      #[if extraConfigmapMounts]
+      #[repeat]{extraConfigmapMounts}
+      - name: mount-name #{it.name}
+        configMap:
+          name: name #{it.configMap}
+
+      #[repeat]{dashboards}
+      - name: dashboards- #[append]{i}
+        configMap:
+          name: name #{chart.name ~ "-dashboards-" ~ i}
+
+      #[if dashboardsConfigMaps]
+      #[repeat]{dashboardsConfigMaps}
+      - name: dashboards- #[append]{i}
+        configMap:
+          # TODO: not sure what to do here, it's a weird tpl link
+          name: = #{i}
+
+      #[if ldap.enabled]
+      - name: ldap
+        secret:
+          secretName: secret-name #[if ldap.existingSecret]{ldap.existingSecret}[else]{grafana.name}
+          items:
+            - key: ldap-toml
+              path: ldap.toml
+
+      - name: storage
+
+        #[if persistence.enabled and persistence.type == "pvc"]
+        persistentVolumeClaim:
+          claimName: name #[if]{persistence.existingClaim}[else]{chart.name}
+
+        emptyDir: {} #[if not persistence.enabled or persistence.type != "statefulset"]
+
+      #[if sidecar.dashboards.enabled]
+      - name: sc-dashboard-volume
+        emptyDir: {}
+
+      #[if sidecar.dashboards.enabled and sidecar.dashboards.SCProvider]
+      - name: sc-dashboard-provider
+        configMap:
+          name: name #{chart.name ~ "-config-dashboards"}
+
+      #[if sidecar.datasources.enabled]
+      - name: sc-datasources-volume
+        emptyDir: {}
+
+      #[if extraVolumeMounts]
+      #[repeat]{extraVolumeMounts}
+      - name: name #{i}
+        persistentVolumeClaim:
+          claimName: claim #{it.existingClaim}
+
+      #[if extraEmptyDirMounts]
+      #[repeat]{extraEmptyDirMounts}
+      - name: name #{i}
+        emptyDir: {}

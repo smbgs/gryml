@@ -1,4 +1,41 @@
 
+gryml:
+
+  override:
+    - parts/pod-spec.yml
+
+  output:
+    - gryml/clusterrole.yaml            #[if rbac.create and not rbac.namespaced]
+    - gryml/clusterrolebinding.yaml     #[if rbac.create and not rbac.namespaced]
+
+    - gryml/configmap.yaml
+
+    - gryml/configmap-dashboard-provider.yaml #[if sidecar.dashboards.enabled]
+
+#    #[if gryml.dashboards]
+#    #[repeat provider:dashboard]{gryml.dashboards}
+#    - gryml/dashboards-json-configmap.yaml
+
+    - gryml/deployment.yaml             #[if not persistence.enabled or persistence.type == "pvc"]
+
+#    - gryml/headless-service.yaml      #[if persistence.enabled and (not persistence.existingClaim) and (persistence.type == "statefulset")]
+
+    - gryml/ingress.yaml                #[if ingress.enabled]
+    - gryml/poddisruptionbudget.yaml    #[if podDisruptionBudget]
+    - gryml/podsecuritypolicy.yaml      #[if rbac.pspEnabled]
+
+    - gryml/pvc.yaml                    #[if persistence.enabled and (not persistence.existingClaim) and persistence.type == "pvc"]
+    - gryml/role.yaml                   #[if rbac.create]
+    - gryml/rolebinding.yaml            #[if rbac.create]
+
+    - gryml/secret.yaml                 #[if not admin.existingSecret]
+    - gryml/secret-env.yaml             #[if not envRenderSecret]
+
+    - gryml/service.yaml
+    - gryml/serviceaccount.yaml               #[if not serviceAccount.create]
+
+    - gryml/statefulset.yaml                  #[if persistence.enabled and (not persistence.existingClaim) and (persistence.type == "statefulset")]
+
 chart:
   app: grafana
   name: grafana
@@ -9,12 +46,15 @@ chart:
     heritage: "service" #{release.service}
   annotations: []
 
+dashboards:
+  provider: dashboard
+
 grafana:
   serviceAccountName: test
   namespace: grafana
 
 release:
-  name: 1
+  name: 0.0.1
   service: grafana
 
 rbac:
@@ -27,26 +67,26 @@ sidecar:
   dashboards: true
   datasources: false
 
-dashboards:
-  provider: dashboard
-
 persistence:
   enabled: true
   type: pvc
   annotations: {}
-  finalizers: {}
+  finalizers: []
   accessModes: []
   size: 1Gi
   storageClassName: "default"
-
-# TODO: consider
-#$gryml-after: and $gryml-before
-#  - include: parts/cluster-role
 
 podAnnotations: {}
 
 ingress:
   enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: "true"
+  path: /
+  hosts:
+    - chart-example.local
+
 
 podDisruptionBudget:
   minAvailable: 3
@@ -58,30 +98,11 @@ admin:
 envRenderSecret:
   key: value
 
-$gryml-sources:
-  - gryml/clusterrole.yaml            #[if rbac.create and not rbac.namespaced]
-  - gryml/clusterrolebinding.yaml     #[if rbac.create and not rbac.namespaced]
-  - gryml/configmap.yaml
-  - gryml/configmap-dashboard-provider.yaml #[if sidecar.dashboards.enabled]
-
-  # TODO: iteration in sources, multiple directives
-  - gryml/dashboards-json-configmap.yaml    #[if dashboards][for $provider: $dashboard in dashboards]
-
-  - gryml/deployment                  #[if not persistence enabled or persistence.type == "pvc"]
-  - gryml/headless-service.yaml       #[if persistence.enabled and (not persistence.existingClaim) and (persistence.type == "statefulset")]
-
-  - gryml/ingress.yaml                #[if ingress.enabled]
-  - gryml/poddisruptionbudget.yaml    #[if podDisruptionBudget]
-  - gryml/podsecuritypolicy.yaml      #[if rbac.pspEnabled]
-
-  - gryml/pvc.yaml                    #[if persistence.enabled and (not persistence.existingClaim) and (persistence.type == "pvc"]
-  - gryml/role.yaml                   #[if rbac.create]
-  - gryml/rolebinding.yaml            #[if rbac.create]
-
-  - gryml/secret.yaml                 #[if not admin.existingSecret]
-  - gryml/secret-env.yaml             #[if not envRenderSecret]
-
-  - gryml/service.yaml
-  - serviceaccount.yaml               #[if not serviceAccount.create]
-
-  - statefulset.yaml                  #[if persistence.enabled and (not persistence.existingClaim) and (persistence.type == "statefulset")]
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+  # targetPort: 4181 To be used with a proxy extraContainer
+  annotations: {}
+  labels: {}
+  portName: service

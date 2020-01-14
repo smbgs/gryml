@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: dashboard-provider #{{chart.name}-dashboard-{$provider}}
+  name: dashboard-provider #{chart.name ~ "-dashboard-" ~ provider}
   namespace: grafana #{grafana.namespace}
   labels:
-    dashboard-provider: #{$provider}
+    dashboard-provider: #{provider}
 
 # TODO: yaml template?
 data: {} #{dashboard}

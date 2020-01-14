@@ -2,12 +2,12 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: "" #{chart.name}
-  labels: {} #[append]{chart.labels}
-  annotations: {} #[append]{chart.annotations}
+  labels: {} #[merge]{chart.labels}
+  annotations: {} #[merge]{chart.annotations}
   namespace: "" #{grafana.namespace}
 
 data: #[append]{configs} #TODO: nested ini templates?
-  plugins: [] #[if plugins]{plugins|join(,)}
+  plugins: = #[if plugins]{",".join(plugins)}
 
   grafana.ini: "" #[template ini]{grafana.ini}
 

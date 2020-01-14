@@ -2,16 +2,22 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: "" #{chart.name}
-  labels: {} #[append]{chart.labels}[append]{ingress.labels}
-  annotations: {} #[append]{chart.annotations}
-  namespace: "" #{grafana.namespace}
+
+  #[merge]{chart.labels}
+  #[merge]{ingress.labels}
+  labels: {}
+
+  annotations: {} #[merge]{chart.annotations}
+  namespace: = #{grafana.namespace}
 spec:
   tls: [] #[if]{ingress.tls}
   rules:
-    - host: "" #{$host}
+
+    #[repeat]{ingress.hosts}
+    - host: = #{it}
       http:
         paths: #[append]{ingress.extraPaths}
-          - path: "" #{ingress.path}
+          - path: = #{ingress.path}
             backend:
-              serviceName: "" #{grafana.name}
-              servicePort: "" #{service.port}
+              serviceName: = #{chart.name}
+              servicePort: = #{service.port}

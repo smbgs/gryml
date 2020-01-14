@@ -2,7 +2,7 @@ apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: RoleBinding
 metadata:
   name: "" #{chart.name}
-  labels: {} #[append]{chart.labels}
+  labels: {} #[merge]{chart.labels}
   namespace: "" #{grafana.namespace}
   annotations: {} #[merge]{annotations}
 

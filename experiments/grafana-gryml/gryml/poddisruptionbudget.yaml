@@ -2,8 +2,8 @@ apiVersion: policy/v1beta1
 kind: PodDisruptionBudget
 metadata:
   name: "" #{chart.name}
-  labels: {} #[append]{chart.labels}[append]{ingress.labels}
-  annotations: {} #[append]{chart.annotations}
+  labels: {} #[merge]{chart.labels}[append]{ingress.labels}
+  annotations: {} #[merge]{chart.annotations}
   namespace: "" #{grafana.namespace}
 spec:
   minAvailable: 1 #[if]{podDisruptionBudget.minAvailable}

@@ -2,8 +2,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: "" #{chart.name}
-  labels: {} #[append]{chart.labels}
-  annotations: {} #[append]{chart.annotations}
+  labels: {} #[merge]{chart.labels}
+  annotations: {} #[merge]{chart.annotations}
   namespace: [] #{grafana.namespace}
 spec:
   clusterIP: None

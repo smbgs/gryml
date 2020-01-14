@@ -2,12 +2,12 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: "" #{chart.name}
-  labels: {} #[append]{chart.labels}
+  labels: {} #[merge]{chart.labels}
   namespace: "" #{grafana.namespace}
   annotations: {} #[merge]{persistence.annotations}
-  finalizers: [] #[merge]{persistence.finalizers}
+  finalizers: [] #[append]{persistence.finalizers}
 spec:
-  accessModes: [] #[merge]{persistence.accessModes}
+  accessModes: [] #[append]{persistence.accessModes}
   resources:
     requests:
       storage: 1Gi #{persistence.size}

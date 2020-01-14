@@ -2,7 +2,7 @@ apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
   name: "" #{chart.name}
-  labels: {} #[append]{chart.labels}[append]{ingress.labels}
+  labels: {} #[merge]{chart.labels}[append]{ingress.labels}
   namespace: "" #{grafana.namespace}
   annotations:
     seccomp.security.alpha.kubernetes.io/allowedProfileNames: 'docker/default'
