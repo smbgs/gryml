@@ -49,6 +49,11 @@ chart:
 dashboards:
   provider: dashboard
 
+downloadDashboards:
+  env:
+    VAR1: value1
+    VAR2: value2
+
 grafana:
   serviceAccountName: test
   namespace: grafana

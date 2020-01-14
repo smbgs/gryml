@@ -33,9 +33,9 @@ parts:
         command: ["/bin/sh"]
         args: [ "-c", "mkdir -p /var/lib/grafana/dashboards/default && /bin/sh /etc/grafana/download_dashboards.sh" ]
 
-        #[repeat]{dashboards.env}
         env:
-          - name: name   #{k}
+          #[repeat]{downloadDashboards.env}
+          - name: name   #{i}
             value: value #{it}
 
         volumeMounts: #[append]{extraSecretMounts}
