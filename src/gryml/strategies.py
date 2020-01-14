@@ -64,15 +64,20 @@ def repeat_value(core, old_value, strat_expression, value_expression, context):
     if strat_expression:
         i_key, it_key = str(strat_expression).strip().split(":")
 
-    for i, it in enumerate(iterable):
+    if isinstance(iterable, list):
+        enumerated = enumerate(iterable)
+    else:
+        enumerated = iterable.items()
+
+    for i, it in enumerated:
         updated = core.process(deepcopy(old_value), context=dict(
             tags=context['tags'],
+            path=context['path'],
             values={
                 **context['values'],
                 i_key: i,
                 it_key: it
             }))
-
         # TODO: we might wanna rethink how this is implemented and return the mutator in the context
         context['list'].append(updated)
 

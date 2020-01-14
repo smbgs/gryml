@@ -59,11 +59,22 @@ class Gryml:
         self.env.filters['s'] = \
             lambda s: self.sub_pattern.sub(lambda mo: str(self.eval(mo.group(1), context)), s)
 
-        return self.env.compile_expression(expression, undefined_to_none=False)({
-            **self.values,
-            **context.get('values', {}),
-            **kwargs
-        })
+        try:
+            return self.env.compile_expression(expression, undefined_to_none=False)({
+                **self.values,
+                **context.get('values', {}),
+                **kwargs
+            })
+        except Exception as e:
+            self.logger.error(
+                "Unable evaluate expression: `%s`\n"
+                "Reason: %s\n"
+                "File: %s (line: %s)\n",
+                expression,
+                e,
+                Path(context.get('path')).resolve(),
+                context.get('line'),
+                )
 
     @staticmethod
     def parse_values(source_values):
@@ -196,6 +207,7 @@ class Gryml:
     def get_rules(target, context):
 
         line = context.get('line')
+        parent_line = context.get('parent_line')
         tags = context.get('tags')
 
         rules = []
@@ -206,13 +218,14 @@ class Gryml:
             if not context.get('is_list_item') or not isinstance(target, dict):
                 rules.extend(comment)
 
-        offset = 1
-        above_comment = tags.get(line - offset)
-        while above_comment and above_comment[0]['line_start']:
-            for idx, rule in enumerate(above_comment):
-                rules.insert(idx, rule)
-            offset += 1
+        if parent_line != 0 and parent_line != line:
+            offset = 1
             above_comment = tags.get(line - offset)
+            while above_comment and above_comment[0]['line_start']:
+                for idx, rule in enumerate(above_comment):
+                    rules.insert(idx, rule)
+                offset += 1
+                above_comment = tags.get(line - offset)
 
         return rules
 
@@ -242,7 +255,7 @@ class Gryml:
         mutable = context.get('mutable', False) if context else False
         line = context.setdefault('line', 0) if context else 0
 
-        rules = self.get_rules(result, context) # type: list
+        rules = self.get_rules(result, context)  # type: list
 
         if any(rule['strat'] in self.skip_nested_processing_strats for rule in rules):
             return self.apply_rules(result, context, rules)
@@ -263,6 +276,7 @@ class Gryml:
                     'mutable': mutable,
                     'is_map_value': True,
                     'key': k,
+                    'parent_line': line,
                     'line': target.lc.data[k][0] + 1,
                     'value_used': True
                 }
@@ -290,6 +304,7 @@ class Gryml:
                     'is_list_item': True,
                     'list': result,
                     'index': k,
+                    'parent_line': line,
                     'line': target.lc.data[k][0] + 1,
                     'value_used': True
                 }
