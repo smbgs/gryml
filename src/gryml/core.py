@@ -104,9 +104,11 @@ class Gryml:
 
             if load_nested:
                 for it in loadable_before:
-                    before_values.update(self.load_values(
+                    nested_gryml = Gryml(self.output)
+                    before_values.update(nested_gryml.load_values(
                         path.parent.resolve() / it, base_values, process, mutable, load_nested, load_sources)
                     )
+                    self.sources.extend(nested_gryml.sources)
 
             if process:
                 tags = self.extract_tags(rd, 0)
@@ -121,9 +123,11 @@ class Gryml:
             if load_nested:
                 after_values = CommentedMap()
                 for it in loadable_after:
+                    nested_gryml = Gryml(self.output)
                     after_values.update(
-                        self.load_values(path.parent.resolve() / it, values, process, load_nested, load_sources)
+                        nested_gryml.load_values(path.parent.resolve() / it, values, process, load_nested, load_sources)
                     )
+                    self.sources.extend(nested_gryml.sources)
 
                 values.update(after_values)
 
@@ -246,6 +250,7 @@ class Gryml:
         if isinstance(target, dict):
             result = CommentedMap()
             setattr(result, LineCol.attrib, target.lc)
+            to_delete = set()
             for k, v in target.items():
                 if not target.lc.data or k not in target.lc.data:
                     result[k] = v
@@ -263,16 +268,15 @@ class Gryml:
                 }
 
                 value = self.process(v, ctx)
-
-                if mutable:
-                    if ctx['value_used']:
-                        result[k] = value
-                        target[k] = value
-                    else:
-                        del target[k]
+                if ctx['value_used']:
+                    result[k] = value
                 else:
-                    if ctx['value_used']:
-                        result[k] = value
+                    to_delete.add(k)
+
+            if mutable:
+                target.update(result)
+                for d in to_delete:
+                    target.pop(d)
 
         elif isinstance(target, list):
             result = CommentedSeq()
