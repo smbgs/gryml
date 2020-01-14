@@ -33,7 +33,7 @@ Lets look at the simple example:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: "application" #{"app" ~ common.name ~ "-suffix"}
+  name: "application" #{"app-" ~ common.name ~ "-suffix"}
 ``` 
 
 The `name` field with the default value `"application"` has the `#{"app-" ~ common.name ~ "-suffix"}` Gryml tag. 

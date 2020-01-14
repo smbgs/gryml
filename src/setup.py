@@ -14,7 +14,7 @@ setuptools.setup(
     description="Gryml YAML Processor",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://gitlab.com/sovnarkom/remak8s/tree/master/gryml",
+    url="https://github.com/achichenin/gryml",
     packages=setuptools.find_packages(),
     classifiers=[
         'Development Status :: 3 - Alpha',
