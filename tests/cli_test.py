@@ -22,7 +22,7 @@ class CLITest(unittest.TestCase):
 
     def test_dispatch_complex_path(self):
 
-        setattr(self.namespace, 'path', 'fixtures/complex/complex.deployment.gryml.yml')
+        setattr(self.namespace, 'path', 'complex/complex.deployment.gryml.yml')
         setattr(self.namespace, 'values_file', 'fixtures/values.gryml.yml')
         setattr(self.namespace, 'set', None)
         setattr(self.namespace, 'with_values', None)
@@ -33,7 +33,7 @@ class CLITest(unittest.TestCase):
 
     def test_custom_values(self):
 
-        setattr(self.namespace, 'path', 'fixtures/complex/complex.deployment.gryml.yml')
+        setattr(self.namespace, 'path', 'complex/complex.deployment.gryml.yml')
         setattr(self.namespace, 'values_file', 'fixtures/values.gryml.yml')
 
         setattr(self.namespace, 'set', ['test.a=1'])

@@ -72,7 +72,7 @@ class Gryml:
                 "File: %s (line: %s)\n",
                 expression,
                 e,
-                Path(context.get('path')).resolve(),
+                Path(context.get('path')).resolve() if context.get('path') else '<undefined>',
                 context.get('line'),
                 )
 
@@ -199,7 +199,7 @@ class Gryml:
                 name,
                 strat_expression or value_expression,
                 e,
-                Path(context.get('path')).resolve(),
+                Path(context.get('path')).resolve() if context.get('path') else '<undefined>',
                 context.get('line'),
             )
 
@@ -218,7 +218,7 @@ class Gryml:
             if not context.get('is_list_item') or not isinstance(target, dict):
                 rules.extend(comment)
 
-        if parent_line != 0 and parent_line != line:
+        if parent_line != line:
             offset = 1
             above_comment = tags.get(line - offset)
             while above_comment and above_comment[0]['line_start']:
