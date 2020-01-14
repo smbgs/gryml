@@ -2,6 +2,7 @@ import logging
 import random
 import re
 import string
+import sys
 from datetime import datetime
 from io import StringIO
 from pathlib import Path
@@ -149,7 +150,25 @@ class Gryml:
 
             return values
 
+    @staticmethod
+    def process_file(path, rd, prd, starting_pos):
+        for it in prd:
+            ending_pos = rd.tell()
+            output = StringIO()
+            rd.seek(starting_pos)
+            output.write(rd.read(ending_pos - starting_pos))
+            output.seek(0)
+            yield path, output, it, starting_pos
+            starting_pos = ending_pos
+
     def iterate_path(self, path: Path):
+
+        if path == '-':
+            input_rd = StringIO(sys.stdin.read())
+            prd = self.yaml.load_all(input_rd)
+            for it in self.process_file(path, input_rd, prd, 0):
+                yield it
+            return
 
         path = Path(path)
 
@@ -160,15 +179,8 @@ class Gryml:
             with open(path) as rd:
                 stating_pos = rd.tell()
                 prd = self.yaml.load_all(rd)
-
-                for it in prd:
-                    ending_pos = rd.tell()
-                    output = StringIO()
-                    rd.seek(stating_pos)
-                    output.write(rd.read(ending_pos - stating_pos))
-                    output.seek(0)
-                    yield path, output, it, stating_pos
-                    stating_pos = ending_pos
+                for it in self.process_file(path, rd, prd, stating_pos):
+                    yield it
 
         elif path.is_dir():
             for sub_dir in path.iterdir():
@@ -333,8 +345,13 @@ class Gryml:
             yield self.process(definition, dict(tags=tags, values=values, path=path))
 
     def process_sources(self):
+
         for source_path in self.sources:
-            for sub_path, output, it, offset in self.iterate_path(self.path.parent.resolve() / source_path):
+
+            if source_path != '-':
+                source_path = self.path.parent.resolve() / source_path
+
+            for sub_path, output, it, offset in self.iterate_path(source_path):
                 sub_tags = self.extract_tags(output, offset)
                 result = self.process(it, dict(
                     tags=sub_tags,

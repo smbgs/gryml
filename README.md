@@ -14,6 +14,24 @@ automate the generation of any yaml files when value substitution is needed.
 We provide [the full list of features](FEATURES.md) separately, but in this document we will cover the most important
 ones.  
 
+## Installation
+
+Gryml is now available in the pypi (Python 3.7+ is required): 
+
+- `pip install gryml`
+
+And you should be able to use CLI version:
+- `gryml --help`
+
+Gryml supports UNIX pipes for both input and output so something like this is also possible:
+ 
+```bash
+$ echo "{say: something} #{world.greeting}" | gryml - --set world.greeting="hello world!"
+---
+say: hello world!
+``` 
+
+But generally you'll use Gryml to process existing template files as shown in the following section.
 
 ## Basics
 
@@ -233,8 +251,23 @@ Now you can just exec: `gryml -f values.gryml.yml`, as a result you should be ab
 - Avoid complex logic in the output yaml files and instead implement this logic in the values files
 - Separate configuration between multiple values files instead of combining it into a single one
 
+
 ## Library
 
-Gryml is now only available in the test pypi environment: 
+Gryml can easily be used as a python module without CLI:
 
-- `pip install -i https://test.pypi.org/simple/ gryml`
+```python
+from gryml.core import Gryml
+from pathlib import Path
+
+gryml = Gryml()
+
+values = gryml.load_values(
+    Path("values-file.yaml"), 
+    base_values=None, 
+    process=True, 
+    mutable=True,
+    load_nested=True, 
+    load_sources=True
+)
+```
