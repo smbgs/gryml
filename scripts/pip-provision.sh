@@ -1,18 +1,16 @@
 #!/usr/bin/env bash
 
 TITLE="Provisioning Gryml to pip"
-PYBASE="/venv/remak8s/bin/"
 
 echo "$TITLE..."
 
+pip install --upgrade setuptools wheel twine
 
-$PYBASE/pip install --upgrade setuptools wheel twine
+cd ./gryml/src/ || return
 
-cd /remak8s/gryml/src/ || return
+python setup.py sdist bdist_wheel
 
-$PYBASE/python setup.py sdist bdist_wheel
-
-$PYBASE/python -m twine upload dist/*
+python -m twine upload dist/*
 
 rm -rf build
 rm -rf dist
