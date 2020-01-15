@@ -8,7 +8,7 @@ metadata:
   labels: {}
 
   annotations: {} #[merge]{chart.annotations}
-  namespace: = #{grafana.namespace}
+  namespace: = #{chart.namespace}
 spec:
   tls: [] #[if]{ingress.tls}
   rules:

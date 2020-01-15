@@ -4,7 +4,7 @@ metadata:
   name: "" #{chart.name}
   labels: {} #[merge]{chart.labels}[append]{ingress.labels}
   annotations: {} #[merge]{chart.annotations}
-  namespace: "" #{grafana.namespace}
+  namespace: "" #{chart.namespace}
 spec:
   minAvailable: 1 #[if]{podDisruptionBudget.minAvailable}
   maxUnavailable: 1 #[if]{podDisruptionBudget.maxUnavailable}

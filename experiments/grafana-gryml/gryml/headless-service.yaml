@@ -4,7 +4,7 @@ metadata:
   name: "" #{chart.name}
   labels: {} #[merge]{chart.labels}
   annotations: {} #[merge]{chart.annotations}
-  namespace: [] #{grafana.namespace}
+  namespace: [] #{chart.namespace}
 spec:
   clusterIP: None
   selector:

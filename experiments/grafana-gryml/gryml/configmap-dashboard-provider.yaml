@@ -1,19 +1,19 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: grafana-role #{chart.name}
+  name: = #{chart.name ~ "-dashboard"}
   labels: {} #[merge]{chart.labels}
   annotations: {} #[merge]{chart.annotations}
-  namespace: "" #{grafana.namespace}
+  namespace: "" #{chart.namespace}
 data:
-  provider.yaml: | #[template gryml]
+  provider.yaml: | #[template]
     apiVersion: 1
     providers:
-    - name: name #{sidecar.dashboards.provider.name}
-      orgId: undefined #{sidecar.dashboards.provider.orgid}
-      folder: undefined #{'sidecar.dashboards.provider.folder}
-      type: none #{sidecar.dashboards.provider.type}
-      disableDeletion: false #{sidecar.dashboards.provider.disableDelete}
-      allowUiUpdates: false #{sidecar.dashboards.provider.allowUiUpdates}
+    - name: {{ sidecar.dashboards.provider.name }}
+      orgId: {{ sidecar.dashboards.provider.orgid }}
+      folder: {{ sidecar.dashboards.provider.folder }}
+      type: {{ sidecar.dashboards.provider.type }}
+      disableDeletion: {{ sidecar.dashboards.provider.disableDelete }}
+      allowUiUpdates: {{ sidecar.dashboards.provider.allowUiUpdates }}
       options:
-        path: / #{sidecar.dashboards.folder}/{sidecar.dashboards.defaultFolderName}
+        path: {{ sidecar.dashboards.folder }}/{{ sidecar.dashboards.defaultFolderName }}

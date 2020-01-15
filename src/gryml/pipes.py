@@ -57,3 +57,8 @@ def sha256(v, core):
     sha_sum = hashlib.sha256()
     sha_sum.update(v.encode())
     return base64.b64encode(sha_sum.digest()).decode()
+
+
+@Pipes.pipe('valmap')
+def valmap(val, pipe, core):
+    return {k: Pipes.apply(pipe, v, core) for k, v in val.items()}

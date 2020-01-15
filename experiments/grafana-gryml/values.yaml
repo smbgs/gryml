@@ -5,10 +5,11 @@ gryml:
 chart:
   app: grafana
   name: grafana
+  namespace: grafana
   labels:
     app: chart-app #{chart.app}
     chart: chart-name #{chart.name}
-    release: "1" #{release.name}
+    release: "1.0.0" #{release.name}
     heritage: "service" #{release.service}
   annotations: []
 
@@ -290,17 +291,17 @@ extraSecretMounts: []
 
 ## Additional grafana server volume mounts
 # Defines additional volume mounts.
-extraVolumeMounts: []
-  # - name: extra-volume
-  #   mountPath: /mnt/volume
-  #   readOnly: true
-#   existingClaim: volume-claim
+extraVolumeMounts:
+   - name: extra-volume
+     mountPath: /mnt/volume
+     readOnly: true
+     existingClaim: volume-claim
 
 ## Pass the plugins you want installed as a list.
 ##
-plugins: []
-  # - digrich-bubblechart-panel
-# - grafana-clock-panel
+plugins:
+ - digrich-bubblechart-panel
+ - grafana-clock-panel
 
 ## Configure grafana datasources
 ## ref: http://docs.grafana.org/administration/provisioning/#datasources
@@ -389,7 +390,7 @@ dashboardsConfigMaps: {}
 ## NOTE: values in map will be converted to ini format
 ## ref: http://docs.grafana.org/installation/configuration/
 ##
-grafana.ini:
+grafana_ini:
   paths:
     data: /var/lib/grafana/data
     logs: /var/log/grafana

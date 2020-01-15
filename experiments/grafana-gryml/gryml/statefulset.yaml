@@ -3,7 +3,7 @@ kind: StatefulSet
 metadata:
   name: "" #{grafana.serviceAccountName}
   labels: {} #[merge]{chart.labels}[append]{service.labels}
-  namespace: "" #{grafana.namespace}
+  namespace: "" #{chart.namespace}
   annotations: {} #[merge]{serviceAccount.annotations}
 spec:
   replicas: 1 #{replicas}

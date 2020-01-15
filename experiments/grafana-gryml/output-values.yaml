@@ -11,6 +11,7 @@ gryml:
 
     - gryml/configmap-dashboard-provider.yaml #[if sidecar.dashboards.enabled]
 
+# TODO: FEATURE: add repeat context while repeating output files
 #    #[if gryml.dashboards]
 #    #[repeat provider:dashboard]{gryml.dashboards}
 #    - gryml/dashboards-json-configmap.yaml
@@ -28,10 +29,10 @@ gryml:
     - gryml/rolebinding.yaml            #[if rbac.create]
 
     - gryml/secret.yaml                 #[if not admin.existingSecret]
-    - gryml/secret-env.yaml             #[if not envRenderSecret]
+    - gryml/secret-env.yaml             #[if envRenderSecret]
 
     - gryml/service.yaml
-    - gryml/serviceaccount.yaml               #[if not serviceAccount.create]
+    - gryml/serviceaccount.yaml         #[if not serviceAccount.create]
 
-    - gryml/statefulset.yaml                  #[if persistence.enabled and (not persistence.existingClaim) and (persistence.type == "statefulset")]
+    - gryml/statefulset.yaml            #[if persistence.enabled and (not persistence.existingClaim) and (persistence.type == "statefulset")]
 

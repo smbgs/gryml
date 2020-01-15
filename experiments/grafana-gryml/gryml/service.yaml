@@ -7,7 +7,7 @@ metadata:
   #[merge]{service.labels}
   labels: {}
 
-  namespace: "" #{grafana.namespace}
+  namespace: "" #{chart.namespace}
   annotations: {} #[merge]{service.annotations}
 
 spec:

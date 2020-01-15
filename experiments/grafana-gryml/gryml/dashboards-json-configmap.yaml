@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: dashboard-provider #{chart.name ~ "-dashboard-" ~ provider}
-  namespace: grafana #{grafana.namespace}
+  namespace: grafana #{chart.namespace}
   labels:
     dashboard-provider: #{provider}
 

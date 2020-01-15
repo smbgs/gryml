@@ -6,7 +6,7 @@ metadata:
   #[merge]{chart.labels}
   #[merge]{ingress.labels}
   labels: {}
-  namespace: "" #{grafana.namespace}
+  namespace: "" #{chart.namespace}
   annotations:
     seccomp.security.alpha.kubernetes.io/allowedProfileNames: 'docker/default'
     seccomp.security.alpha.kubernetes.io/defaultProfileName:  'docker/default'

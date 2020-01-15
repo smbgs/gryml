@@ -4,12 +4,13 @@ metadata:
   name: "" #{chart.name}
   labels: {} #[merge]{chart.labels}
   annotations: {} #[merge]{chart.annotations}
-  namespace: "" #{grafana.namespace}
+  namespace: "" #{chart.namespace}
 
 data: #[append]{configs} #TODO: nested ini templates?
   plugins: = #[if plugins]{",".join(plugins)}
 
-#  grafana.ini: "" #[template ini]{grafana.ini}
+  # TODO: ini template
+  grafana.ini: "" #[template ini]{grafana_ini}
 
   #[if dashboards]
   download_dashboards.sh: | #[template]

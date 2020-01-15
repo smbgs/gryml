@@ -8,7 +8,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: grafana #{grafana.serviceAccountName}
-    namespace: grafana #{grafana.namespace}
+    namespace: grafana #{chart.namespace}
 
 roleRef:
   kind: ClusterRole

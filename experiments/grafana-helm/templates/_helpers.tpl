@@ -53,7 +53,7 @@ Create the name of the service account
 {{/*
 Allow the release namespace to be overridden for multi-namespace deployments in combined charts
 */}}
-{{- define "grafana.namespace" -}}
+{{- define "chart.namespace" -}}
   {{- if .Values.namespaceOverride -}}
     {{- .Values.namespaceOverride -}}
   {{- else -}}

@@ -15,7 +15,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: {{ template "grafana.serviceAccountName" . }}
-    namespace: {{ template "grafana.namespace" . }}
+    namespace: {{ template "chart.namespace" . }}
 roleRef:
   kind: ClusterRole
   name: {{ template "grafana.fullname" . }}-clusterrole

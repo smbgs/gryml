@@ -156,6 +156,7 @@ Currently Gryml Core defines the following pipes:
 - `randstr` - uses the value as length for the generated alphanumeric string
 - `source` - uses the value as file name that will be loaded as string (relative to the current context) 
 - `sha256` - converts the value to sha256 hash 
+- `valmap(<pipe>)` - when value is dictionary applies the pipe to the each field-value, preserving keys  
 
 ## Chart management and migrating from HELM
 

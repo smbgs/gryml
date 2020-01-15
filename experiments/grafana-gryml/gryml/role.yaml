@@ -3,7 +3,7 @@ kind: Role
 metadata:
   name: "" #{chart.name}
   labels: {} #[merge]{chart.labels}
-  namespace: "" #{grafana.namespace}
+  namespace: "" #{chart.namespace}
   annotations: {} #[merge]{annotations}
 
 rules: #[append]{rbac.extraRoleRules}
