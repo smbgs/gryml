@@ -18,11 +18,14 @@ ones.
 
 Gryml is now available in the pypi (Python 3.7+ is required): 
 
-- `pip install gryml`
+```bash
+$ pip install gryml
+```
 
 And you should be able to use CLI version:
-- `gryml --help`
-
+```bash
+$ gryml --help
+```
 Gryml supports UNIX pipes for both input and output so something like this is also possible:
  
 ```bash
@@ -38,7 +41,11 @@ But generally you'll use Gryml to process existing template files as shown in th
 Gryml can be used as Unix-style CLI to pipe the incoming file or directory combined with the values file or cmd args 
 as a stream of K8S resource definitions to stdout.
 
-This can be used to apply the modified definitions via kubectl: `gryml <file>|<dir> --set app.name=sample | kubectl apply -f -`
+This can be used to apply the modified definitions via kubectl: 
+
+```bash
+$ gryml <file>|<dir> --set app.name=sample | kubectl apply -f -
+```
 
 Gryml relies on YAML comments instead  of inline templates, which makes it compatible with the tools that can
 only work with the native k8s resource definition files.
@@ -58,7 +65,9 @@ The `name` field with the default value `"application"` has the `#{"app-" ~ comm
 
 We can apply the value using the following command:
 
- `gryml deployment.gryml.yml --set common.name=simple`
+```bash
+$ gryml deployment.gryml.yml --set common.name=simple
+```
 
 This will result in the following output:
 
@@ -87,8 +96,10 @@ To facilitate that, Gryml provides "value strategies" that can be applied using 
  - `append` - adds new array items to the existing array value
  - `merge-using <key>` - merges two array values containing objects using the values of the fields `<key>` in both 
     collections to find and replace existing items
- - `if <expression>` - removes the value or item if expression evaluates as false      
+ - `if <expression>` - removes the value or item if expression evaluates as `false`
+ - `else` - can be used rigth after `if` strategy to output the value if that strategy was evaluated as `false`       
  - `repeat <key:value?>` - iterates over values from the `expression` and repeats the array items     
+ - `template jinja` - processes the existing value as Jinja2 template using current values tree as the context  
 
    
 ### Value files
@@ -121,9 +132,8 @@ Note: Additional values files are imported **before** the current file and value
 
 ### Output
 
-It is possible to reference yaml 
-yaml files that will be also processed and included in the output **after** all values files and `--set` arguments are 
-processed and a final value tree has been built. 
+It is possible to reference yaml files that will be also processed and included in the output **after** all values
+ files and `--set` arguments are processed and a final value tree has been built. 
 
 In combination with the `include` and `override` directives this allows different outputs to be generated from a single 
 codebase based on the different initial values files. Moreover, resource definitions can be logically organized into
@@ -137,19 +147,25 @@ code between different resource definitions, while deriving the related parts fr
 Gryml value expressions support Jinja2 filters (we call them value transformation pipes though). Gryml also
 defines a couple of additional pipes suitable for use with k8s.
 
-TODO: describe value transformation pipes more.
+Currently Gryml Core defines the following pipes:
 
-### Conditional values
-
-Are not supported yet and might not be supported. We'd like to avoid conditional configuration as much as possible.
-   
+- `lowercase` - AAA -> aaa
+- `limit(<n>)` - limits the length of the sting to n symbols
+- `k8sName` - limits the length of the string to 64 symbols
+- `b64enc` - converts the value to base64 encoded string
+- `randstr` - uses the value as length for the generated alphanumeric string
+- `source` - uses the value as file name that will be loaded as string (relative to the current context) 
+- `sha256` - converts the value to sha256 hash 
 
 ## Chart management and migrating from HELM
 
 Unlike HELM, Gryml currently does not add any labels into generated resource definitions and is not capable of managing
-the release versions. It's unclear if we  will support this approach in future, but we want to introduce some
-quality of life improvements for `kubectl` users.
+the release versions.
+ 
+Yet it's still possible to generate and use the "common" labels and annotations in the every output yaml definition,
+so that they can all be filtered and deleted at once. 
 
+We might introduce `grymlctl` utility in future to manage kubernetes cluster directly and handle gryml packages.
 
 ## Advanced example
 
