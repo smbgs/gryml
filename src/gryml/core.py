@@ -5,7 +5,7 @@ from datetime import datetime
 from io import StringIO
 from pathlib import Path
 
-from jinja2 import Environment
+from jinja2 import Environment, TemplateSyntaxError
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq, LineCol
 
@@ -44,6 +44,8 @@ class Gryml:
             self.env.filters[name] = wrapper(pipe)
 
         self.env.globals['semstamp'] = lambda r: datetime.utcnow().strftime(f'{r}.%Y%m.%d-%H%M')
+        self.env.trim_blocks = True
+        self.env.lstrip_blocks = True
 
     def resolve(self, path):
         return self.path.parent.resolve() / path
@@ -54,6 +56,31 @@ class Gryml:
     def update_values(self, values):
         self.values.update(values)
 
+    def template(self, template, context=None, **kwargs):
+        try:
+            compiled = self.env.from_string(template)
+            return compiled.render(self.normalize_values({
+                **self.values,
+                **context.get('values', {}),
+                **kwargs
+            }))
+        except TemplateSyntaxError as e:
+
+            self.logger.error(
+                "Unable to compile the template\n"
+                "Reason: %s\n"
+                "Template line: %s\n"
+                "Line: %s",
+                e.message,
+                e.lineno,
+                context.get('line', 0) + e.lineno
+            )
+            raise e
+        except Exception as e:
+            # TODO: handle logging properly
+            self.logger.exception(e)
+            raise e
+
     def eval(self, expression, context=None, **kwargs):
 
         if context is None:
@@ -63,11 +90,11 @@ class Gryml:
             lambda s: self.sub_pattern.sub(lambda mo: str(self.eval(mo.group(1), context)), s)
 
         try:
-            return self.env.compile_expression(expression, undefined_to_none=False)({
+            return self.env.compile_expression(expression, undefined_to_none=False)(self.normalize_values({
                 **self.values,
                 **context.get('values', {}),
                 **kwargs
-            })
+            }))
         except Exception as e:
             self.logger.error(
                 "Unable evaluate expression: `%s`\n"
@@ -111,7 +138,7 @@ class Gryml:
 
             values = self.yaml.load(rd)
             rd.seek(0)
-            before_values = CommentedMap(base_values if base_values else {})
+            before_values = base_values if base_values else {}
 
             gryml = values.get('gryml', {})
             loadable_before = gryml.get('include', [])
@@ -138,10 +165,10 @@ class Gryml:
                 after_values = CommentedMap()
                 for it in loadable_after:
                     nested_gryml = Gryml(self.output)
-                    after_values.update(
-                        nested_gryml.load_values(path.parent.resolve() / it, values, process, load_nested, load_sources)
-                    )
-                    self.sources.extend(nested_gryml.sources)
+                    after_values.update(nested_gryml.load_values(
+                        path.parent.resolve() / it, values, process, mutable, load_nested, load_sources
+                    ))
+                    loadable_sources.extend(nested_gryml.sources)
 
                 values.update(after_values)
 
@@ -150,7 +177,7 @@ class Gryml:
 
             self.values = values
 
-            return values
+            return self.values
 
     @staticmethod
     def process_file(path, rd, prd, starting_pos):
@@ -259,6 +286,21 @@ class Gryml:
 
         return value
 
+    def normalize_values(self, values):
+        if isinstance(values, dict):
+            result = dict()
+            for k, v in values.items():
+                result[k] = self.normalize_values(v)
+            return result
+
+        elif isinstance(values, list):
+            result = list()
+            for v in values:
+                result.append(self.normalize_values(v))
+            return result
+        else:
+            return values
+
     def process(self, target, context=None):
 
         result = target
@@ -274,7 +316,7 @@ class Gryml:
         if any(rule['strat'] in self.skip_nested_processing_strats for rule in rules):
             return self.apply_rules(result, context, rules)
 
-        if isinstance(target, dict):
+        if isinstance(target, CommentedMap):
             result = CommentedMap()
             setattr(result, LineCol.attrib, target.lc)
             to_delete = set()
@@ -306,7 +348,7 @@ class Gryml:
                 for d in to_delete:
                     target.pop(d)
 
-        elif isinstance(target, list):
+        elif isinstance(target, CommentedSeq):
             result = CommentedSeq()
             setattr(result, LineCol.attrib, target.lc)
             for k, v in enumerate(target):

@@ -28,7 +28,7 @@ parts:
 
       #[if dashboards]
       - name: download-dashboards
-        image: download #{downloadDashboardsImage.repository}:{downloadDashboardsImage.tag}
+        image: download #{downloadDashboardsImage.repository ~ ":" ~ downloadDashboardsImage.tag}
         imagePullPolicy: Always #{downloadDashboardsImage.pullPolicy}
         command: ["/bin/sh"]
         args: [ "-c", "mkdir -p /var/lib/grafana/dashboards/default && /bin/sh /etc/grafana/download_dashboards.sh" ]
@@ -74,7 +74,8 @@ parts:
           - name: sc-datasources-volume
             mountPath: "/etc/grafana/provisioning/datasources"
 
-    containers: #[append]{extraContainers}
+    #[append]{extraContainers}
+    containers:
 
       #[if sidecar.dashboards.enabled]
       - name: dasboard #{chart.name ~ "-sc-dashboard"}
@@ -105,7 +106,7 @@ parts:
 
       #[if chart.name]
       - name: primary #{chart.name}
-        image: image #{image.repository}:{image.tag}"
+        image: image #{image.repository ~ ":" ~ image.tag}
         imagePullPolicy: Always #{image.pullPolicy}
         command: [] #{command}
 
@@ -136,8 +137,8 @@ parts:
             subPath: "" #{persistence.subPath}
 
           #[repeat]{dashboards}
-          - name: dashboards #{"dashboard-" ~ it}
-            mountPath: "/var/lib/grafana/dashboards/" #[append]{it ~ "/" ~ i ~ ".json"}
+          - name: dashboards #{"dashboard-" ~ i}
+            mountPath: "/var/lib/grafana/dashboards/" #[append]{i ~ "/" ~ i ~ ".json"}
             subPath: .json #{i ~ ".json"}
 
           #[if dashboardsConfigMaps]

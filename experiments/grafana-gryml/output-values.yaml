@@ -1,0 +1,37 @@
+gryml:
+
+  include:
+    - parts/pod-spec.yml
+
+  output:
+    - gryml/clusterrole.yaml            #[if rbac.create and not rbac.namespaced]
+    - gryml/clusterrolebinding.yaml     #[if rbac.create and not rbac.namespaced]
+
+    - gryml/configmap.yaml
+
+    - gryml/configmap-dashboard-provider.yaml #[if sidecar.dashboards.enabled]
+
+#    #[if gryml.dashboards]
+#    #[repeat provider:dashboard]{gryml.dashboards}
+#    - gryml/dashboards-json-configmap.yaml
+
+    - gryml/deployment.yaml             #[if not persistence.enabled or persistence.type == "pvc"]
+
+    - gryml/headless-service.yaml      #[if persistence.enabled and (not persistence.existingClaim) and (persistence.type == "statefulset")]
+
+    - gryml/ingress.yaml                #[if ingress.enabled]
+    - gryml/poddisruptionbudget.yaml    #[if podDisruptionBudget]
+    - gryml/podsecuritypolicy.yaml      #[if rbac.pspEnabled]
+
+    - gryml/pvc.yaml                    #[if persistence.enabled and (not persistence.existingClaim) and persistence.type == "pvc"]
+    - gryml/role.yaml                   #[if rbac.create]
+    - gryml/rolebinding.yaml            #[if rbac.create]
+
+    - gryml/secret.yaml                 #[if not admin.existingSecret]
+    - gryml/secret-env.yaml             #[if not envRenderSecret]
+
+    - gryml/service.yaml
+    - gryml/serviceaccount.yaml               #[if not serviceAccount.create]
+
+    - gryml/statefulset.yaml                  #[if persistence.enabled and (not persistence.existingClaim) and (persistence.type == "statefulset")]
+

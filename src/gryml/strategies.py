@@ -1,6 +1,7 @@
-from copy import copy, deepcopy
+from copy import deepcopy
 
 from jinja2 import Undefined
+from ruamel.yaml import scalarstring
 
 
 class Strategies:
@@ -48,6 +49,9 @@ def else_value(core, old_value, strat_expression, value_expression, context):
 @Strategies.strategy('repeat')
 def repeat_value(core, old_value, strat_expression, value_expression, context):
 
+    if not context.get('value_used'):
+        return None
+
     if not context.get('may_repeat'):
         return None
 
@@ -86,6 +90,10 @@ def repeat_value(core, old_value, strat_expression, value_expression, context):
 
 @Strategies.strategy('set')
 def set_value(core, old_value, strat_expression, value_expression, context):
+
+    if not context.get('value_used'):
+        return None
+
     value = core.eval(value_expression, context)
     if not isinstance(value, Undefined):
         return deepcopy(value)
@@ -95,6 +103,10 @@ def set_value(core, old_value, strat_expression, value_expression, context):
 
 @Strategies.strategy('append')
 def append_value(core, old_value, strat_expression, value_expression, context):
+
+    if not context.get('value_used'):
+        return None
+
     value = core.eval(value_expression, context)
     if not isinstance(value, Undefined):
         return old_value + deepcopy(value)
@@ -104,6 +116,10 @@ def append_value(core, old_value, strat_expression, value_expression, context):
 
 @Strategies.strategy('merge')
 def merge_value(core, old_value, strat_expression, value_expression, context):
+
+    if not context.get('value_used'):
+        return None
+
     # TODO: make pure?
     value = core.eval(value_expression, context)
     if not isinstance(value, Undefined):
@@ -113,6 +129,10 @@ def merge_value(core, old_value, strat_expression, value_expression, context):
 
 @Strategies.strategy('merge-using')
 def merge_using_value(core, old_value, strat_expression, value_expression, context):
+
+    if not context.get('value_used'):
+        return None
+
     keys = set()
     value = core.eval(value_expression, context)
 
@@ -128,3 +148,19 @@ def merge_using_value(core, old_value, strat_expression, value_expression, conte
 
     return old_value
 
+
+@Strategies.strategy('template')
+def template(core, old_value, strat_expression, value_expression, context):
+
+    if not context.get('value_used'):
+        return None
+
+    value = core.eval(value_expression, context)
+
+    if strat_expression is None:
+        strat_expression = 'jinja'
+
+    if strat_expression == 'jinja':
+        return scalarstring.preserve_literal(core.template(old_value, context))
+
+    return old_value

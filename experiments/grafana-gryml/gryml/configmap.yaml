@@ -9,36 +9,38 @@ metadata:
 data: #[append]{configs} #TODO: nested ini templates?
   plugins: = #[if plugins]{",".join(plugins)}
 
-  grafana.ini: "" #[template ini]{grafana.ini}
+#  grafana.ini: "" #[template ini]{grafana.ini}
 
   #[if dashboards]
   download_dashboards.sh: | #[template]
     #!/usr/bin/env sh
     set -euf
     {% if dashboardProviders %}
-      {% for key, value in values.dashboardProviders %}
-        {% for provider in value.providers }}
+      {% for key, value in dashboardProviders.items() %}
+        {% for provider in value.providers %}
     mkdir -p {{ provider.options.path }}
         {% endfor %}
       {% endfor %}
     {% endif %}
 
-    {% for provider, dashboards in values.dashboards %}
-      {% for key, value in dashboards %}
-        {% if "gnetId" in value or "url" in value %}
-      curl -skf \
-      --connect-timeout 60 \
-      --max-time 60 \
-        {% if not value.b64content %}
+    {% for provider, dash in dashboards.items() %}
+      {% for key, value in dash.items() %}
+        {% if value is mapping and ("gnetId" in value or "url" in value) %}
+    curl -skf --connect-timeout 60 --max-time 60 \
+      {% if not value.b64content %}
       -H "Accept: application/json" \
       -H "Content-Type: application/json;charset=UTF-8" \
-        {% endif %}
-      {% if $value.url -}}
-        {{ $value.url }}
+      {% endif %}
+      {% if value.url %}
+      {{ value.url }}
+
       {% else %}
-        https://grafana.com/api/dashboards/{{ value.gnetId }}/revisions/{{ value.revision or 1 }}/download
-        {{ value.datasource ? "| sed 's|\"datasource\":[^,]*|\"datasource\": \"{{ value.datasource }}\"|g'" }}
-        {{ value.b64content ? "| base64 -d" }} \
-      > /var/lib/grafana/dashboards/{{ provider }}/{{ key }}.json
+      https://grafana.com/api/dashboards/{{ value.gnetId }}/revisions/{{ value.revision or 1 }}/download  \
+      {% if value.datasource %}  | sed 's|\"datasource\":[^,]*|\"datasource\": \"{{ value.datasource }}\"|g'{% endif %}
+      {% if value.b65content %}  | base64 -d \{% endif %}
+    > /var/lib/grafana/dashboards/{{ provider }}/{{ key }}.json
+
+        {% endif %}
+        {% endif %}
       {% endfor %}
     {% endfor %}
