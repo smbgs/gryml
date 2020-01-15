@@ -18,8 +18,11 @@ spec:
         app: #{grafana.name}
         release: #{chart.release}
       annotations: #[merge]{podAnnotations}
-        checksum/config: = #{"configmap.yaml"|fileSha256sum}
-        checksum/dashboards-json-config: = #{"dashboards-json-configmap.yaml"|fileSha256sum}
-        checksum/sc-dashboard-provider-config: = #{"dashboards-json-configmap.yaml"|fileSha256sum}
-        checksum/secret: = #[if not admin.existingSecret]{"dashboards-json-configmap.yaml"|fileSha256sum}
+
+        # TODO: this should be probably calculated with the resulting config somehow instead of "source"
+        checksum/config: = #{"gryml/configmap.yaml"|source|sha256}
+        checksum/dashboards-json-config: = #{"gryml/dashboards-json-configmap.yaml"|source|sha256}
+        checksum/sc-dashboard-provider-config: = #{"gryml/configmap-dashboard-provider.yaml"|source|sha256}
+        checksum/secret: = #[if not admin.existingSecret]{"gryml/secret.yaml"|source|sha256}
+
     spec: [] #{parts.podSpec}

@@ -1,7 +1,5 @@
 import logging
-import random
 import re
-import string
 import sys
 from datetime import datetime
 from io import StringIO
@@ -39,12 +37,16 @@ class Gryml:
         self.skip_nested_processing_strats = {'repeat'}
 
         for name, pipe in Pipes.pipes.items():
-            self.env.filters[name] = pipe
 
-        self.env.filters['randstr'] = \
-            lambda n: ''.join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(n))
+            def wrapper(p):
+                return lambda *x: p(*x, self)
+
+            self.env.filters[name] = wrapper(pipe)
 
         self.env.globals['semstamp'] = lambda r: datetime.utcnow().strftime(f'{r}.%Y%m.%d-%H%M')
+
+    def resolve(self, path):
+        return self.path.parent.resolve() / path
 
     def set_values(self, values):
         self.values = values
