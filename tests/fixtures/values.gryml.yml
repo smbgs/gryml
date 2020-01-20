@@ -8,6 +8,8 @@ tag: 'latest'
 
 replicas: 2
 serviceAccount-name: 'custom-serviceAccount'
+custom:
+  x: 0 #{test.a} # Should be replaced with 1
 
 env:
   common:

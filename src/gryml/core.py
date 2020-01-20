@@ -397,6 +397,7 @@ class Gryml:
 
             for sub_path, output, it, offset in self.iterate_path(source_path):
                 sub_tags = self.extract_tags(output, offset)
+
                 result = self.process(it, dict(
                     tags=sub_tags,
                     values=self.values,

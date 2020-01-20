@@ -40,7 +40,7 @@ def dispatch(parsed):
 
     if parsed.with_values:
         # TODO: negative cases and tests
-        values.update(gryml.parse_values(parsed.with_values))
+        deep_merge(values, gryml.parse_values(parsed.with_values))
 
     if parsed.values_file:
         gryml.load_values(Path(parsed.values_file), values, True, True, True, True)

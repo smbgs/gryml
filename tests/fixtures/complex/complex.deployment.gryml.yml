@@ -13,6 +13,8 @@ spec:
     metadata:
       labels:
         application: "application" #{name}
+        custom1: "x" #{test.a}
+        custom2: "x" #{custom.x}
 
     spec:
       serviceAccountName: serviceAccount #{serviceAccountName}
