@@ -44,8 +44,6 @@ def dispatch(parsed):
 
     if parsed.values_file:
         gryml.load_values(Path(parsed.values_file), values, True, True, True, True)
-        # Overriding the resulting values anyway
-        deep_merge(values, gryml.parse_values(parsed.with_values))
 
     if parsed.set:
         # TODO: negative cases and tests

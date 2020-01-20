@@ -340,6 +340,8 @@ class Gryml:
                 value = self.process(v, ctx)
                 if ctx['value_used']:
                     result[k] = value
+                    if mutable:
+                        target[k] = value
                 else:
                     to_delete.add(k)
 
@@ -370,6 +372,9 @@ class Gryml:
                     value = self.process(v, ctx)
                 else:
                     value = v
+
+                if mutable:
+                    target[k] = v
 
                 if ctx['value_used']:
                     result.append(value)

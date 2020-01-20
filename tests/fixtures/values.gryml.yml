@@ -9,7 +9,8 @@ tag: 'latest'
 replicas: 2
 serviceAccount-name: 'custom-serviceAccount'
 custom:
-  x: 0 #{test.a} # Should be replaced with 1
+  x: 2 #{test.a} # Should be replaced with 1
+  d: 0 #{custom.x}
 
 env:
   common:

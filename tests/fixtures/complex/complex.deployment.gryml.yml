@@ -15,6 +15,7 @@ spec:
         application: "application" #{name}
         custom1: "x" #{test.a}
         custom2: "x" #{custom.x}
+        custom3: "x" #{custom.d}
 
     spec:
       serviceAccountName: serviceAccount #{serviceAccountName}
