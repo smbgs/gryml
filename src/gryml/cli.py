@@ -9,6 +9,7 @@ import sys
 from ruamel.yaml import YAML
 
 from gryml.core import Gryml
+from gryml.utils import deep_merge
 
 handler = colorlog.StreamHandler()
 handler.setFormatter(colorlog.ColoredFormatter('%(log_color)s%(levelname)s:%(name)s:%(message)s'))
@@ -19,18 +20,6 @@ def print_definition(it, pipe=sys.stdout):
     print('---', file=pipe)
     yaml = YAML()
     yaml.dump(it, pipe)
-
-
-def deep_merge(values, new_values):
-    # TODO: this is very simplistic, ignores lists
-    #  also it might be worth it to use strategies here
-    for k, v in new_values.items():
-        if isinstance(v, dict):
-            if k not in values:
-                values[k] = dict()
-            deep_merge(values[k], v)
-        else:
-            values.setdefault(k, v)
 
 
 def dispatch(parsed):

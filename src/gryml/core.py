@@ -1,17 +1,17 @@
 import logging
 import re
-import sys
 from datetime import datetime
 from io import StringIO
 from pathlib import Path
 
+import sys
 from jinja2 import Environment, TemplateSyntaxError
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq, LineCol
 
 from gryml.pipes import Pipes
 from gryml.strategies import Strategies
-from gryml.utils import SilentUndefined
+from gryml.utils import SilentUndefined, deep_merge
 
 
 class Gryml:
@@ -153,9 +153,10 @@ class Gryml:
 
             if process:
                 tags = self.extract_tags(rd, 0)
+
+                deep_merge(values, before_values)
                 before_values.update(values)
-                values = self.process(values, dict(tags=tags, values=before_values, mutable=mutable, path=path))
-                before_values.update(values)
+                self.process(values, dict(tags=tags, values=before_values, mutable=mutable, path=path))
                 values = before_values
 
             loadable_after = gryml.get('override', [])
