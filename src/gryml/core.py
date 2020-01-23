@@ -141,6 +141,7 @@ class Gryml:
             values = self.yaml.load(rd)
             rd.seek(0)
             before_values = base_values if base_values else {}
+            before_values.pop('gryml', None)
 
             gryml = values.get('gryml', {})
             loadable_before = gryml.get('include', [])
