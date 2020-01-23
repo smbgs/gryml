@@ -149,8 +149,9 @@ class Gryml:
                 for it in loadable_before:
                     nested_gryml = Gryml(self.output)
                     before_values.update(nested_gryml.load_values(
-                        path.parent.resolve() / it, base_values, process, mutable, load_nested, load_sources)
+                        path.parent.resolve() / it, before_values, process, mutable, load_nested, load_sources)
                     )
+
                     self.sources.extend(nested_gryml.sources)
                     self.context_values.update(nested_gryml.context_values)
 
