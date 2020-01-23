@@ -31,6 +31,8 @@ class Gryml:
         self.yaml = YAML(typ=['safe', 'rt'])
         self.path = Path('.')
 
+        self.context_values = {}
+
         self.sources = []
 
         # TODO: this needs to be adjustable from decorator
@@ -150,6 +152,7 @@ class Gryml:
                         path.parent.resolve() / it, base_values, process, mutable, load_nested, load_sources)
                     )
                     self.sources.extend(nested_gryml.sources)
+                    self.context_values.update(nested_gryml.context_values)
 
             if process:
                 tags = self.extract_tags(rd, 0)
@@ -170,6 +173,7 @@ class Gryml:
                         path.parent.resolve() / it, values, process, mutable, load_nested, load_sources
                     ))
                     loadable_sources.extend(nested_gryml.sources)
+                    self.context_values.update(nested_gryml.context_values)
 
                 values.update(after_values)
 
@@ -398,6 +402,12 @@ class Gryml:
 
         for source_path in self.sources:
 
+            context = self.context_values.get(id(source_path), {})
+
+            if isinstance(source_path, dict):
+                source_path = source_path.pop('path')
+                context = {**context, **source_path}
+
             if source_path != '-':
                 source_path = self.path.parent.resolve() / source_path
 
@@ -406,7 +416,7 @@ class Gryml:
 
                 result = self.process(it, dict(
                     tags=sub_tags,
-                    values=self.values,
+                    values={**context, **self.values},
                     offset=it.lc.line,
                     mutable=False,
                     path=sub_path,
@@ -419,6 +429,9 @@ class Gryml:
         if values is None:
             values = self.values
         return next(self.iterate_definitions(definition_file, values))
+
+    def store_context_values(self, target, values):
+        self.context_values[id(target)] = values
 
     def print(self, target):
         self.yaml.dump(target, self.output)

@@ -26,3 +26,7 @@ class SilentUndefined(Undefined):
 
     def __getattr__(self, item):
         return self
+
+
+class LazyString(str):
+    pass

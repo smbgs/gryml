@@ -1,7 +1,9 @@
-from copy import deepcopy
+from copy import deepcopy, copy
 
 from jinja2 import Undefined
 from ruamel.yaml import scalarstring
+
+from gryml.utils import LazyString
 
 
 class Strategies:
@@ -15,6 +17,7 @@ class Strategies:
         else:
             def decorator(func):
                 cls.strategies[name] = func
+                return func
             return decorator
 
     @classmethod
@@ -74,16 +77,38 @@ def repeat_value(core, old_value, strat_expression, value_expression, context):
         enumerated = iterable.items()
 
     for i, it in enumerated:
-        updated = core.process(deepcopy(old_value), context=dict(
-            tags=context['tags'],
-            path=context['path'],
-            values={
-                **context['values'],
-                i_key: i,
-                it_key: it
+
+        values = {
+            **context['values'],
+            i_key: i,
+            it_key: it
+        }
+
+        rules = context['rules'][1:]
+
+        if rules and rules[0]['strat'] == 'repeat':
+            rule = rules[0]
+            repeat_value(core, old_value, rule['arg_exp'], rule['exp'], {
+                **context,
+                'tags': context['tags'],
+                'path': context['path'],
+                'rules': rules,
+                'values': values,
+                'value_used': True
+            })
+        else:
+            updated = copy(core.process(deepcopy(old_value), context={
+                'tags': context['tags'],
+                'path': context['path'],
+                'values': values
             }))
-        # TODO: we might wanna rethink how this is implemented and return the mutator in the context
-        context['list'].append(updated)
+            # TODO: we might wanna rethink how this is implemented and return the mutator in the context
+
+            if isinstance(updated, str):
+                updated = LazyString(updated)
+
+            core.store_context_values(updated, values)
+            context['list'].append(updated)
 
     return None
 
