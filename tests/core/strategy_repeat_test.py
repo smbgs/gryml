@@ -1,3 +1,4 @@
+import sys
 import unittest
 from io import StringIO
 from pathlib import Path
@@ -11,10 +12,10 @@ class StrategyRepeatTest(unittest.TestCase):
         self.gryml = Gryml()
         self.path = Path(__file__).parent.resolve()
 
+    def test_basics(self):
         definition_file = self.path / '../fixtures/core/strategy_repeat.yaml'
         self.res = self.gryml.process_first_definition(definition_file)
 
-    def test_basics(self):
         simple_list = self.res.get('simple_list')  # type: list
 
         self.assertEqual(1, simple_list.count("basic_value"))
@@ -35,6 +36,9 @@ class StrategyRepeatTest(unittest.TestCase):
         self.assertFalse(any(it.get('name') == "false_name"  for it in dict_list))
 
     def test_conditional(self):
+        definition_file = self.path / '../fixtures/core/strategy_repeat.yaml'
+        self.res = self.gryml.process_first_definition(definition_file)
+
         conditional_inside = self.res.get('conditional_inside')  # type: list
 
         for i, it in enumerate(conditional_inside):
@@ -44,6 +48,9 @@ class StrategyRepeatTest(unittest.TestCase):
                 self.assertNotIn("conditional", it)
 
     def test_nested(self):
+        definition_file = self.path / '../fixtures/core/strategy_repeat.yaml'
+        self.res = self.gryml.process_first_definition(definition_file)
+
         nested_config = self.res.get('nested_config')  # type: list
         for i, it in enumerate(nested_config):
             self.assertEqual(f"root-{i}", it['name'])
@@ -52,7 +59,20 @@ class StrategyRepeatTest(unittest.TestCase):
             for ii, iit in enumerate(it['nested']):
                 self.assertEqual(f"nested-{i}-{ii}", iit['name'])
 
+    def test_nested2(self):
+        definition_file = self.path / '../fixtures/core/strategy_repeat_nested2.yaml'
+        self.res = self.gryml.process_first_definition(definition_file)
+
+        nested_config = self.res.get('nested_config2')  # type: list
+        for i, it in enumerate(nested_config):
+            self.assertIn(f"nested", it)
+            for ii, iit in enumerate(it['nested']):
+                self.assertEqual(ii + 3, iit["value"])
+
     def test_strings(self):
+        definition_file = self.path / '../fixtures/core/strategy_repeat.yaml'
+        self.res = self.gryml.process_first_definition(definition_file)
+
         strings = self.res.get('strings')  # type: list
         strings2 = self.res.get('strings2')  # type: list
         self.assertEqual(3, len(strings))
@@ -63,3 +83,10 @@ class StrategyRepeatTest(unittest.TestCase):
         output = self.gryml.output.read()
         self.assertNotIn("bad", output)
         print(output)
+
+
+    def test_repeat_in_output(self):
+
+        definition_file = self.path / '../fixtures/packs/entry.yml'
+        self.res = self.gryml.load_values(definition_file, {}, True, True, True, True)
+        self.gryml.yaml.dump(self.res['test'], sys.stdout)

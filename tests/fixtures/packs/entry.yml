@@ -1,0 +1,46 @@
+
+env:
+
+  d1:
+    enabled: true
+
+  d2:
+    enabled: true
+    nested:
+      n1: false
+      n2: true
+
+  d3:
+    enabled: false
+
+test:
+
+  output:
+
+    - base
+
+    #[repeat k:it]{env}
+    #[if it.enabled]
+    - output:
+
+        #[repeat kk:iit]{it.nested}
+        - nested1 #{k ~ kk}
+
+        - static
+
+        #[repeat kk:iit]{it.nested}
+        #[if iit]
+        - nested2 #{k ~ kk}
+
+
+test_target:
+
+    output:
+      - base
+      - output:
+          - static
+      - output:
+          - d2n1
+          - d2n2
+          - static
+          - d2n2

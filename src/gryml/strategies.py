@@ -52,8 +52,7 @@ def else_value(core, old_value, strat_expression, value_expression, context):
 @Strategies.strategy('repeat')
 def repeat_value(core, old_value, strat_expression, value_expression, context):
 
-    if not context.get('value_used'):
-        return None
+    context['value_repeated'] = True
 
     if not context.get('may_repeat'):
         return None
@@ -62,8 +61,9 @@ def repeat_value(core, old_value, strat_expression, value_expression, context):
         return old_value
 
     iterable = core.eval(value_expression, context)
-    context['value_repeated'] = True
-    context['value_used'] = False
+
+    if not iterable:
+        return None
 
     i_key = 'i'
     it_key = 'it'
@@ -97,19 +97,22 @@ def repeat_value(core, old_value, strat_expression, value_expression, context):
                 'value_used': True
             })
         else:
-            updated = copy(core.process(deepcopy(old_value), context={
+
+            nested_context = {
                 'tags': context['tags'],
                 'path': context['path'],
                 'extra_rules': rules,
                 'values': values
-            }))
+            }
+            updated = copy(core.process(deepcopy(old_value), nested_context))
             # TODO: we might wanna rethink how this is implemented and return the mutator in the context
 
             if isinstance(updated, str):
                 updated = LazyString(updated)
 
-            core.store_context_values(updated, values)
-            context['list'].append(updated)
+            if nested_context['value_used']:
+                core.store_context_values(updated, values)
+                context['list'].append(updated)
 
     return None
 

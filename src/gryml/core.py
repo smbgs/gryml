@@ -34,6 +34,7 @@ class Gryml:
         self.env = Environment(undefined=SilentUndefined)
         self.yaml = YAML(typ=['safe', 'rt'])
         self.path = Path('.')
+        self.active_rules_lines = set()
 
         self.context_values = {}
 
@@ -235,16 +236,17 @@ class Gryml:
                 line_start = matches.group(1) is not None
                 matches = [it.groupdict() for it in self.gryml_mask.finditer(line[matches.regs[0][0]:]) if it.lastgroup]
                 if matches:
+                    line = i + 1 + offset
                     for it in matches:
-                        it.update(line_start=line_start)
-                    result_comments[i + 1 + offset] = matches
+                        it.update(line_start=line_start, line=line)
+                    result_comments[line] = matches
         return result_comments
 
     def apply_strategy(self, name, old_value, strat_expression, value_expression, context):
         try:
             return Strategies.apply(name, self, old_value, strat_expression, value_expression, context)
         except Exception as e:
-            self.logger.error(
+            self.logger.exception(
                 "Unable to apply the `%s` strategy while evaluating expression: `%s`\n"
                 "Reason: %s\n"
                 "File: %s (line: %s)\n",
@@ -255,8 +257,7 @@ class Gryml:
                 context.get('line'),
             )
 
-    @staticmethod
-    def get_rules(target, context):
+    def get_rules(self, target, context):
 
         line = context.get('line')
         parent_line = context.get('parent_line')
@@ -279,6 +280,7 @@ class Gryml:
                 offset += 1
                 above_comment = tags.get(line - offset)
 
+        rules = [rule for rule in rules if id(rule) not in self.active_rules_lines]
         return rules
 
     def apply_rules(self, target, context, rules):
@@ -293,7 +295,16 @@ class Gryml:
             if rule['strat'] is None:
                 rule['strat'] = 'set'
 
+            if id(rule) in self.active_rules_lines:
+                continue
+
+            self.active_rules_lines.add(id(rule))
+
             value = self.apply_strategy(rule['strat'], value, rule['arg_exp'], rule['exp'], context)
+            self.active_rules_lines.remove(id(rule))
+
+            if context.get('value_repeated'):
+                break
 
         return value
 
@@ -314,24 +325,25 @@ class Gryml:
 
     def process(self, target, context=None):
 
-        result = target
-
         path = context.get('path') if context else None
         tags = context.get('tags', {}) if context else {}
         values = context.get('values', {}) if context else {}
         mutable = context.get('mutable', False) if context else False
         line = context.setdefault('line', 0) if context else 0
 
-        rules = self.get_rules(result, context) + context.get('extra_rules', [])  # type: list
+        rules = context.get('extra_rules', None) or self.get_rules(target, context)  # type: list
+        result = self.apply_rules(target, context, rules)
 
-        if any(rule['strat'] in self.skip_nested_processing_strats for rule in rules):
-            return self.apply_rules(result, context, rules)
+        if not context['value_used']:
+            return result
 
         if isinstance(target, CommentedMap):
             result = CommentedMap()
             setattr(result, LineCol.attrib, target.lc)
             to_delete = set()
             for k, v in target.items():
+
+                # TODO: something needs to be done with this case
                 if not target.lc.data or k not in target.lc.data:
                     result[k] = v
                     continue
@@ -365,6 +377,12 @@ class Gryml:
             result = CommentedSeq()
             setattr(result, LineCol.attrib, target.lc)
             for k, v in enumerate(target):
+
+                # TODO: something needs to be done with this case
+                if not target.lc.data or k not in target.lc.data:
+                    result.append(v)
+                    continue
+
                 ctx = {
                     'path': path,
                     'tags': tags,
@@ -378,22 +396,17 @@ class Gryml:
                     'value_used': True
                 }
 
-                # Only processing this iter value if it's not on the same string as parent definition
-                if line != ctx['line']:
-                    value = self.process(v, ctx)
-                else:
-                    value = v
+                value = self.process(v, ctx)
 
-                if mutable:
-                    target[k] = v
-
-                if ctx['value_used']:
+                if ctx['value_used'] and not ctx.get('value_repeated'):
+                    if mutable:
+                        target[k] = v
                     result.append(value)
             if mutable:
                 target.clear()
                 target.extend(result)
 
-        return self.apply_rules(result, context, rules)
+        return result
 
     def iterate_definitions(self, definition_file, values=None):
 
@@ -406,34 +419,39 @@ class Gryml:
 
     def process_sources(self):
 
-        for source_path in self.sources:
+        def process_list(sources, nested_context):
 
-            if source_path is None:
-                # Sometimes conditions may return None, so we'll just ignore such sources
-                continue
+            for source_path in sources:
 
-            context = self.context_values.get(id(source_path), {})
+                if source_path is None:
+                    # Sometimes conditions may return None, so we'll just ignore such sources
+                    continue
 
-            if isinstance(source_path, dict):
-                source_path = source_path.pop('path')
-                context = {**context, **source_path}
+                context = self.context_values.get(id(source_path), {})
 
-            if source_path != '-':
-                source_path = self.path.parent.resolve() / source_path
+                if isinstance(source_path, dict):
+                    nested_sources = source_path.get('output')
+                    yield from process_list(nested_sources, context)
+                    continue
 
-            for sub_path, output, it, offset in self.iterate_path(source_path):
-                sub_tags = self.extract_tags(output, offset)
+                if source_path != '-':
+                    source_path = self.path.parent.resolve() / source_path
 
-                result = self.process(it, dict(
-                    tags=sub_tags,
-                    values={**context, **self.values},
-                    offset=it.lc.line,
-                    mutable=False,
-                    path=sub_path,
-                ))
-                self.output.write('---\n')
-                self.yaml.dump(result, self.output)
-                yield sub_path, result
+                for sub_path, output, it, offset in self.iterate_path(source_path):
+                    sub_tags = self.extract_tags(output, offset)
+
+                    result = self.process(it, dict(
+                        tags=sub_tags,
+                        values={**nested_context, **context, **self.values},
+                        offset=it.lc.line,
+                        mutable=False,
+                        path=sub_path,
+                    ))
+                    self.output.write('---\n')
+                    self.yaml.dump(result, self.output)
+                    yield sub_path, result
+
+        yield from process_list(self.sources, {})
 
     def process_first_definition(self, definition_file, values=None):
         if values is None:

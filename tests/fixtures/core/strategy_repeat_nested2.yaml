@@ -1,0 +1,9 @@
+
+nested_config2:
+
+  #[repeat]{ [1, 2, 3] }
+  - nested:
+
+      #[repeat k:v]{ [ 3, 4 ] }
+      - value: nested #{v}
+
