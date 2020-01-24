@@ -408,6 +408,10 @@ class Gryml:
 
         for source_path in self.sources:
 
+            if source_path is None:
+                # Sometimes conditions may return None, so we'll just ignore such sources
+                continue
+
             context = self.context_values.get(id(source_path), {})
 
             if isinstance(source_path, dict):
