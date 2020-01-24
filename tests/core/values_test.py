@@ -33,3 +33,9 @@ class ValueLoadingTest(unittest.TestCase):
         # TODO: asserts, now it's just a smoke test
         self.assertIsNotNone(values)
         self.assertGreater(self.gryml.output.tell(), 1)
+
+    def test_merge(self):
+        values_file = self.path / '../fixtures/core/strategy_merge.yaml'
+        self.res = self.gryml.load_values(values_file, {}, True, True, True, True)
+        print(self.res)
+        self.assertEqual(2, len(self.res['data']['res']))

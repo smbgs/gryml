@@ -84,7 +84,6 @@ class StrategyRepeatTest(unittest.TestCase):
         self.assertNotIn("bad", output)
         print(output)
 
-
     def test_repeat_in_output(self):
 
         definition_file = self.path / '../fixtures/packs/entry.yml'

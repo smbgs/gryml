@@ -55,7 +55,7 @@ def repeat_value(core, old_value, strat_expression, value_expression, context):
     context['value_repeated'] = True
 
     if not context.get('may_repeat'):
-        return None
+        return old_value
 
     if not context.get('is_list_item'):
         return old_value
@@ -63,7 +63,7 @@ def repeat_value(core, old_value, strat_expression, value_expression, context):
     iterable = core.eval(value_expression, context)
 
     if not iterable:
-        return None
+        return old_value
 
     i_key = 'i'
     it_key = 'it'
@@ -101,6 +101,7 @@ def repeat_value(core, old_value, strat_expression, value_expression, context):
             nested_context = {
                 'tags': context['tags'],
                 'path': context['path'],
+                #'line': context['line'],
                 'extra_rules': rules,
                 'values': values
             }
@@ -114,7 +115,7 @@ def repeat_value(core, old_value, strat_expression, value_expression, context):
                 core.store_context_values(updated, values)
                 context['list'].append(updated)
 
-    return None
+    return old_value
 
 
 @Strategies.strategy('set')

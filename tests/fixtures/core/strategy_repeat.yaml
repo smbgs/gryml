@@ -1,3 +1,22 @@
+strings2:
+
+  #[repeat]{ [1, 2, 3] }
+  - "bad" #{i}
+
+strings:
+
+  #[repeat]{ [1, 2, 3] }
+  - "string1"
+
+
+conditional_inside:
+
+  #[repeat]{ [1, 2, 3] }
+  - name: root_level #{"root-" ~ i}
+    value: same
+
+    #[if i % 2 == 0]
+    conditional: "?" #{ "will_be_when_id_is_even" }
 
 simple_list:
 
@@ -30,14 +49,6 @@ dict_list:
     value: false_value
     extra: false_value
 
-conditional_inside:
-
-  #[repeat]{ [1, 2, 3] }
-  - name: root_level #{"root-" ~ i}
-    value: same
-
-    #[if i % 2 == 0]
-    conditional: "?" #{ "will_be_when_id_is_even" }
 
 nested_config:
 
@@ -50,12 +61,3 @@ nested_config:
       - name: nested_level #{"nested-" ~ i ~ "-" ~ k}
         value: v #{v}
 
-strings:
-
-  #[repeat]{ [1, 2, 3] }
-  - "string1"
-
-strings2:
-
-  #[repeat]{ [1, 2, 3] }
-  - "bad" #{i}

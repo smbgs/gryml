@@ -42,6 +42,7 @@ class Gryml:
 
         # TODO: this needs to be adjustable from decorator
         self.skip_nested_processing_strats = {'repeat'}
+        self.eager_strats = {'if', 'else', 'repeat'}
 
         for name, pipe in Pipes.pipes.items():
 
@@ -112,6 +113,7 @@ class Gryml:
                 Path(context.get('path')).resolve() if context.get('path') else '<undefined>',
                 context.get('line'),
                 )
+            raise e
 
     @staticmethod
     def parse_values(source_values):
@@ -256,6 +258,7 @@ class Gryml:
                 Path(context.get('path')).resolve() if context.get('path') else '<undefined>',
                 context.get('line'),
             )
+            raise e
 
     def get_rules(self, target, context):
 
@@ -332,10 +335,14 @@ class Gryml:
         line = context.setdefault('line', 0) if context else 0
 
         rules = context.get('extra_rules', None) or self.get_rules(target, context)  # type: list
+
         result = self.apply_rules(target, context, rules)
 
         if not context['value_used']:
             return result
+
+        if context.get('list'):
+            return self.apply_rules(result, context, [r for r in rules if r['strat'] not in self.eager_strats])
 
         if isinstance(target, CommentedMap):
             result = CommentedMap()
@@ -396,7 +403,11 @@ class Gryml:
                     'value_used': True
                 }
 
-                value = self.process(v, ctx)
+                # Only processing this iter value if it's not on the same string as parent definition
+                if line != ctx['line']:
+                    value = self.process(v, ctx)
+                else:
+                    value = v
 
                 if ctx['value_used'] and not ctx.get('value_repeated'):
                     if mutable:
@@ -406,7 +417,7 @@ class Gryml:
                 target.clear()
                 target.extend(result)
 
-        return result
+        return self.apply_rules(result, context, [r for r in rules if r['strat'] not in self.eager_strats])
 
     def iterate_definitions(self, definition_file, values=None):
 
