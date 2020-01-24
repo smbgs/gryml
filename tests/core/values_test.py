@@ -23,11 +23,6 @@ class ValueLoadingTest(unittest.TestCase):
         values = self.gryml.load_values(values_file, process=True, load_nested=True, mutable=True)
 
         self.assertEqual("v2", values['apiVersion']['deployment'])
-        self.assertFalse(values['gryml']['settings']['useSomeOutput'])
-        self.assertTrue(values['gryml']['settings']['derivedSetting'])
-
-        self.assertNotIn('some.yaml', values['gryml']['output'])
-        self.assertIn('tag_placement.yaml', values['gryml']['output'])
 
     def test_auto_process(self):
         values_file = self.path / '../fixtures/core/values.yaml'

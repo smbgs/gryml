@@ -1,4 +1,5 @@
 import unittest
+from io import StringIO
 from pathlib import Path
 
 from gryml.core import Gryml
@@ -51,3 +52,14 @@ class StrategyRepeatTest(unittest.TestCase):
             for ii, iit in enumerate(it['nested']):
                 self.assertEqual(f"nested-{i}-{ii}", iit['name'])
 
+    def test_strings(self):
+        strings = self.res.get('strings')  # type: list
+        strings2 = self.res.get('strings2')  # type: list
+        self.assertEqual(3, len(strings))
+        self.assertEqual(3, len(strings2))
+
+        self.gryml.print(self.res)
+        self.gryml.output.seek(0)
+        output = self.gryml.output.read()
+        self.assertNotIn("bad", output)
+        print(output)

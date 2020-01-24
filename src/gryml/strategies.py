@@ -100,6 +100,7 @@ def repeat_value(core, old_value, strat_expression, value_expression, context):
             updated = copy(core.process(deepcopy(old_value), context={
                 'tags': context['tags'],
                 'path': context['path'],
+                'extra_rules': rules,
                 'values': values
             }))
             # TODO: we might wanna rethink how this is implemented and return the mutator in the context

@@ -49,3 +49,13 @@ nested_config:
       #[repeat k:v]{ [ 3, 4 ] }
       - name: nested_level #{"nested-" ~ i ~ "-" ~ k}
         value: v #{v}
+
+strings:
+
+  #[repeat]{ [1, 2, 3] }
+  - "string1"
+
+strings2:
+
+  #[repeat]{ [1, 2, 3] }
+  - "bad" #{i}

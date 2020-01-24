@@ -7,11 +7,15 @@ from pathlib import Path
 import sys
 from jinja2 import Environment, TemplateSyntaxError
 from ruamel.yaml import YAML
+from ruamel.yaml.representer import RoundTripRepresenter
+
 from ruamel.yaml.comments import CommentedMap, CommentedSeq, LineCol
 
 from gryml.pipes import Pipes
 from gryml.strategies import Strategies
-from gryml.utils import SilentUndefined, deep_merge
+from gryml.utils import SilentUndefined, deep_merge, LazyString
+
+RoundTripRepresenter.add_representer(LazyString, RoundTripRepresenter.represent_str)
 
 
 class Gryml:
@@ -318,7 +322,7 @@ class Gryml:
         mutable = context.get('mutable', False) if context else False
         line = context.setdefault('line', 0) if context else 0
 
-        rules = self.get_rules(result, context)  # type: list
+        rules = self.get_rules(result, context) + context.get('extra_rules', [])  # type: list
 
         if any(rule['strat'] in self.skip_nested_processing_strats for rule in rules):
             return self.apply_rules(result, context, rules)
