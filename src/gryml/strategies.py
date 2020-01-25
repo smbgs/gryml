@@ -112,7 +112,7 @@ def repeat_value(core, old_value, strat_expression, value_expression, context):
                 updated = LazyString(updated)
 
             if nested_context['value_used']:
-                core.store_context_values(updated, values)
+                core.store_context_values(updated, deepcopy(values))
                 context['list'].append(updated)
 
     return old_value
@@ -175,6 +175,26 @@ def merge_using_value(core, old_value, strat_expression, value_expression, conte
     for new_vi in value:
         if new_vi[strat_expression] not in keys:
             old_value.append(new_vi)
+
+    return old_value
+
+
+@Strategies.strategy('with')
+def with_value(core, old_value, strat_expression, value_expression, context):
+
+    if not context.get('value_used'):
+        return None
+
+    i_key = 'i'
+    it_key = 'it'
+
+    if strat_expression:
+        i_key, it_key = str(strat_expression).strip().split(":")
+
+    context['values'].update({
+        i_key: context.get('key'),
+        it_key: old_value
+    })
 
     return old_value
 

@@ -82,7 +82,10 @@ def init_parser():
 
 def main():
     parser = init_parser()
-    dispatch(parser.parse_args(sys.argv[1:]))
+    try:
+        dispatch(parser.parse_args(sys.argv[1:]))
+    except Exception as e:
+        logging.error("Failed with the following issue: %s", e)
 
 
 if __name__ == '__main__':

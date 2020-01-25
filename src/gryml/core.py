@@ -42,7 +42,7 @@ class Gryml:
 
         # TODO: this needs to be adjustable from decorator
         self.skip_nested_processing_strats = {'repeat'}
-        self.eager_strats = {'if', 'else', 'repeat'}
+        self.eager_strats = {'if', 'else', 'repeat', 'with'}
 
         for name, pipe in Pipes.pipes.items():
 
@@ -86,7 +86,7 @@ class Gryml:
             raise e
         except Exception as e:
             # TODO: handle logging properly
-            self.logger.exception(e)
+            self.logger.error(e)
             raise e
 
     def eval(self, expression, context=None, **kwargs):
@@ -248,7 +248,7 @@ class Gryml:
         try:
             return Strategies.apply(name, self, old_value, strat_expression, value_expression, context)
         except Exception as e:
-            self.logger.exception(
+            self.logger.error(
                 "Unable to apply the `%s` strategy while evaluating expression: `%s`\n"
                 "Reason: %s\n"
                 "File: %s (line: %s)\n",
@@ -341,7 +341,7 @@ class Gryml:
         if not context['value_used']:
             return result
 
-        if context.get('list'):
+        if context.get('value_repeated'):
             return self.apply_rules(result, context, [r for r in rules if r['strat'] not in self.eager_strats])
 
         if isinstance(target, CommentedMap):
@@ -411,7 +411,7 @@ class Gryml:
 
                 if ctx['value_used'] and not ctx.get('value_repeated'):
                     if mutable:
-                        target[k] = v
+                        target[k] = value
                     result.append(value)
             if mutable:
                 target.clear()
@@ -453,7 +453,7 @@ class Gryml:
 
                     result = self.process(it, dict(
                         tags=sub_tags,
-                        values={**nested_context, **context, **self.values},
+                        values={**self.values, **context, **nested_context},
                         offset=it.lc.line,
                         mutable=False,
                         path=sub_path,
