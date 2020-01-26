@@ -200,8 +200,8 @@ def with_value(core, old_value, strat_expression, value_expression, context):
     if not context.get('value_used'):
         return None
 
-    i_key = 'i'
-    it_key = 'it'
+    i_key = 'key'
+    it_key = 'this'
 
     if strat_expression:
         i_key, it_key = str(strat_expression).strip().split(":")
@@ -253,14 +253,24 @@ def extend_value(core, old_value, strat_expression, value_expression, context):
     base = deepcopy(context.get('proto', {}).get(strat_expression))
     if base and not isinstance(base, Undefined):
         base = deepcopy(context.get('proto', {}).get(strat_expression))
-        print(base)
-        deep_merge(base, old_value)
-        if isinstance(old_value, CommentedMap):
-            base.lc.data.update(old_value.lc.data)
-        old_value.clear()
-        old_value.update(base)
-        if isinstance(base, CommentedMap) and isinstance(old_value, CommentedMap):
-            old_value.lc.data = base.lc.data
-        return old_value
+
+        rules = context['rules'][1:]
+
+        nested_context = {
+            'proto': context.get('proto', {}),
+            'tags': context['tags'],
+            'path': context['path'],
+            'line': context['line'],
+            'extra_rules': rules,
+            'mutable': True,
+            'values': {
+                **context['values'], **{
+                    'this': base
+                }
+            }
+        }
+
+        updated = copy(core.process(base, nested_context))
+        context['base'] = updated
 
     return old_value

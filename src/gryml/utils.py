@@ -18,6 +18,8 @@ def deep_merge(values, new_values):
             if k not in values:
                 values[k] = dict()
             deep_merge(values[k], v)
+        elif isinstance(v, list):
+            values.setdefault(k, []).extend(v)
         else:
             values[k] = v
 

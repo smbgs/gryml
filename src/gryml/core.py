@@ -42,7 +42,7 @@ class Gryml:
 
         # TODO: this needs to be adjustable from decorator
         self.skip_nested_processing_strats = {'repeat'}
-        self.eager_strats = {'if', 'else', 'repeat', 'with', 'extend'}
+        self.eager_strats = {'if', 'else', 'repeat', 'with', 'proto', 'extend'}
 
         for name, pipe in Pipes.pipes.items():
 
@@ -168,8 +168,8 @@ class Gryml:
 
                 deep_merge(values, before_values)
                 before_values.update(values)
-                self.process(values, dict(tags=tags, values=before_values, mutable=mutable, path=path))
-                values = before_values
+                values = self.process(values, dict(tags=tags, values=before_values, mutable=mutable, path=path))
+                #values = before_values
 
             loadable_after = gryml.get('override', [])
             loadable_sources = gryml.get('output', [])
@@ -273,14 +273,12 @@ class Gryml:
             # Skipping line comments for list items which are not also dicts
             if not context.get('is_list_item') or not isinstance(target, dict):
                 if isinstance(target, CommentedMap):
-                    try:
-                        if not target.lc.data:
-                            rules.extend(comment)
 
-                        elif list(target.lc.data.values())[0][0] != list(target.lc.data.values())[0][2] != target.lc.line:
-                           rules.extend(comment)
-                    except:
-                        print(target)
+                    if not target.lc.data:
+                       rules.extend(comment)
+
+                    elif list(target.lc.data.values())[0][0] != list(target.lc.data.values())[0][2] != target.lc.line:
+                       rules.extend(comment)
 
                 else:
                     rules.extend(comment)
@@ -436,7 +434,16 @@ class Gryml:
                 target.clear()
                 target.extend(result)
 
-        return self.apply_rules(result, context, [r for r in rules if r['strat'] not in self.eager_strats])
+        base = context.get('base')
+
+        result = self.apply_rules(result, context, [r for r in rules if r['strat'] not in self.eager_strats])
+
+        if base:
+            deep_merge(base, result)
+            result.clear()
+            result.update(base)
+
+        return result
 
     def iterate_definitions(self, definition_file, values=None):
 

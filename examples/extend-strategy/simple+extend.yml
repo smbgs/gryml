@@ -1,9 +1,17 @@
+list:
+  - name: name
+    value: value
+
 #[proto]
 base:
   key1: value1 #{context.a}
   key2:
     sub_key1: sub_value1 #{context.b}
     sub_key2: sub_value2
+
+    #[append]{list}
+    list: []
+
   key3:
     - arr1
     - name: one #{context.c}
