@@ -1,0 +1,9 @@
+
+source1: value
+target1: base #[append]{source1} = basevalue
+
+source2: [1, 2, 3]
+target2: [0] #[append]{source1} = [0, 1, 2, 3]
+
+
+

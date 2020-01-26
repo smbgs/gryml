@@ -2,8 +2,9 @@ from copy import deepcopy, copy
 
 from jinja2 import Undefined
 from ruamel.yaml import scalarstring
+from ruamel.yaml.comments import CommentedMap
 
-from gryml.utils import LazyString
+from gryml.utils import LazyString, deep_merge
 
 
 class Strategies:
@@ -99,9 +100,10 @@ def repeat_value(core, old_value, strat_expression, value_expression, context):
         else:
 
             nested_context = {
+                'proto': context.get('proto', {}),
                 'tags': context['tags'],
                 'path': context['path'],
-                #'line': context['line'],
+                'line': context['line'],
                 'extra_rules': rules,
                 'values': values
             }
@@ -127,6 +129,19 @@ def set_value(core, old_value, strat_expression, value_expression, context):
     value = core.eval(value_expression, context)
     if not isinstance(value, Undefined):
         return deepcopy(value)
+    else:
+        return old_value
+
+
+@Strategies.strategy('prepend')
+def prepend_value(core, old_value, strat_expression, value_expression, context):
+
+    if not context.get('value_used'):
+        return None
+
+    value = core.eval(value_expression, context)
+    if not isinstance(value, Undefined):
+        return deepcopy(value) + old_value
     else:
         return old_value
 
@@ -212,5 +227,40 @@ def template(core, old_value, strat_expression, value_expression, context):
 
     if strat_expression == 'jinja':
         return scalarstring.preserve_literal(core.template(old_value, context))
+
+    return old_value
+
+
+@Strategies.strategy('proto')
+def proto_value(core, old_value, strat_expression, value_expression, context):
+
+    if not context.get('value_used'):
+        return None
+
+    context.setdefault('proto', {})[strat_expression or context.get('key')] = old_value
+
+    context['value_processed'] = True
+
+    return old_value
+
+
+@Strategies.strategy('extend')
+def extend_value(core, old_value, strat_expression, value_expression, context):
+
+    if not context.get('value_used'):
+        return None
+
+    base = deepcopy(context.get('proto', {}).get(strat_expression))
+    if base and not isinstance(base, Undefined):
+        base = deepcopy(context.get('proto', {}).get(strat_expression))
+        print(base)
+        deep_merge(base, old_value)
+        if isinstance(old_value, CommentedMap):
+            base.lc.data.update(old_value.lc.data)
+        old_value.clear()
+        old_value.update(base)
+        if isinstance(base, CommentedMap) and isinstance(old_value, CommentedMap):
+            old_value.lc.data = base.lc.data
+        return old_value
 
     return old_value

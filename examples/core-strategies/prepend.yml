@@ -1,0 +1,7 @@
+
+source1: value
+target1: base #[prepend]{source1} = valuebase
+
+source2: [0]
+target2: [1, 2, 3] #[prepend]{source1} = [0, 1, 2, 3]
+

@@ -1,0 +1,64 @@
+# repeat + extend
+
+#[proto]
+base:
+  key1: value1 #{context.a}
+  key2:
+    sub_key1: sub_value1 #{context.b}
+    sub_key2: sub_value2
+  key3:
+    - arr1
+    - name: one #{context.c}
+
+
+iter:
+  - a: 1
+    b: 2
+    c: 3
+
+  - a: 4
+    b: 5
+    c: 6
+
+  - a: 7
+    b: 8
+    c: 9
+
+
+derived:
+
+  #[repeat i:context]{iter}
+  #[extend base]
+  - key2:
+      sub_key2: override
+    key4: new
+
+
+result:
+
+  - key1: 1
+    key2:
+      sub_key1: 2
+      sub_key2: override
+    key3:
+      - arr1
+      - name: 3
+    key4: new
+
+  - key1: 4
+    key2:
+      sub_key1: 5
+      sub_key2: override
+    key3:
+      - arr1
+      - name: 6
+    key4: new
+
+  - key1: 7
+    key2:
+      sub_key1: 8
+      sub_key2: override
+    key3:
+      - arr1
+      - name: 9
+    key4: new

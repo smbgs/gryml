@@ -1,0 +1,33 @@
+
+#[proto base]
+base:
+  key1: value1 #{context.a}
+  key2:
+    sub_key1: sub_value1 #{context.b}
+    sub_key2: sub_value2
+    sub_key3: sub_value3 #{name}
+  key3:
+    - arr1
+    - name: one #{context.c}
+
+#[with name:context]
+#[extend base]
+derived:
+  a: 1
+  b: 2
+  c: 3
+  key4: value #{name}
+
+result:
+  key1: 1
+  key2:
+    sub_key1: 2
+    sub_key2: sub_value2
+    sub_key3: derived
+  key3:
+    - arr1
+    - name: 3
+  a: 1
+  b: 2
+  c: 3
+  key4: derived

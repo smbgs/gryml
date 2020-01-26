@@ -42,7 +42,7 @@ class Gryml:
 
         # TODO: this needs to be adjustable from decorator
         self.skip_nested_processing_strats = {'repeat'}
-        self.eager_strats = {'if', 'else', 'repeat', 'with'}
+        self.eager_strats = {'if', 'else', 'repeat', 'with', 'extend'}
 
         for name, pipe in Pipes.pipes.items():
 
@@ -272,7 +272,18 @@ class Gryml:
 
             # Skipping line comments for list items which are not also dicts
             if not context.get('is_list_item') or not isinstance(target, dict):
-                rules.extend(comment)
+                if isinstance(target, CommentedMap):
+                    try:
+                        if not target.lc.data:
+                            rules.extend(comment)
+
+                        elif list(target.lc.data.values())[0][0] != list(target.lc.data.values())[0][2] != target.lc.line:
+                           rules.extend(comment)
+                    except:
+                        print(target)
+
+                else:
+                    rules.extend(comment)
 
         if parent_line != line:
             offset = 1
@@ -328,6 +339,8 @@ class Gryml:
 
     def process(self, target, context=None):
 
+        context.setdefault('proto', {})
+
         path = context.get('path') if context else None
         tags = context.get('tags', {}) if context else {}
         values = context.get('values', {}) if context else {}
@@ -336,13 +349,15 @@ class Gryml:
 
         rules = context.get('extra_rules', None) or self.get_rules(target, context)  # type: list
 
-        result = self.apply_rules(target, context, rules)
+        result = self.apply_rules(target, context, [r for r in rules if r['strat'] in self.eager_strats])
 
-        if not context['value_used']:
+        if not context['value_used'] or context.get('value_processed'):
             return result
 
         if context.get('value_repeated'):
             return self.apply_rules(result, context, [r for r in rules if r['strat'] not in self.eager_strats])
+
+        target = result
 
         if isinstance(target, CommentedMap):
             result = CommentedMap()
@@ -356,6 +371,7 @@ class Gryml:
                     continue
 
                 ctx = {
+                    'proto': context.get('proto', {}),
                     'path': path,
                     'tags': tags,
                     'values': values,
@@ -368,6 +384,7 @@ class Gryml:
                 }
 
                 value = self.process(v, ctx)
+                context['proto'].update(ctx['proto'])
                 if ctx['value_used']:
                     result[k] = value
                     if mutable:
@@ -391,6 +408,7 @@ class Gryml:
                     continue
 
                 ctx = {
+                    'proto': context.get('proto', {}),
                     'path': path,
                     'tags': tags,
                     'values': values,
@@ -406,6 +424,7 @@ class Gryml:
                 # Only processing this iter value if it's not on the same string as parent definition
                 if line != ctx['line']:
                     value = self.process(v, ctx)
+                    context['proto'].update(ctx['proto'])
                 else:
                     value = v
 

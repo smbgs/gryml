@@ -1,3 +1,22 @@
+dict_list:
+
+  #[repeat]{ [1, 2, 3] } // Repeating with custom values
+  - name: some_name   #{"name is " ~ it}
+    value: some_value #{i}
+    extra: some_extra #{"index-" ~ i ~ "-with-value-" ~ it}
+
+  # Always include this
+  - name: static_name
+    value: static_value
+    extra: extra_value
+
+  #[if false]
+  #[repeat]{ [4, 5, 6] }
+  - name: false_name
+    value: false_value
+    extra: false_value
+
+
 strings2:
 
   #[repeat]{ [1, 2, 3] }
@@ -29,25 +48,6 @@ simple_list:
   - repeated_value2
 
   - some_other_value
-
-
-dict_list:
-
-  #[repeat]{ [1, 2, 3] } // Repeating with custom values
-  - name: some_name   #{"name is " ~ it}
-    value: some_value #{i}
-    extra: some_extra #{"index-" ~ i ~ "-with-value-" ~ it}
-
-  # Always include this
-  - name: static_name
-    value: static_value
-    extra: extra_value
-
-  #[if false]
-  #[repeat]{ [4, 5, 6] }
-  - name: false_name
-    value: false_value
-    extra: false_value
 
 
 nested_config:
