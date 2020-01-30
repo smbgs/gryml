@@ -2,9 +2,8 @@ from copy import deepcopy, copy
 
 from jinja2 import Undefined
 from ruamel.yaml import scalarstring
-from ruamel.yaml.comments import CommentedMap
 
-from gryml.utils import LazyString, deep_merge
+from gryml.utils import LazyString
 
 
 class Strategies:
@@ -265,12 +264,14 @@ def extend_value(core, old_value, strat_expression, value_expression, context):
             'mutable': True,
             'values': {
                 **context['values'], **{
-                    'this': base
+                    'proto': base,
                 }
             }
         }
 
         updated = copy(core.process(base, nested_context))
         context['base'] = updated
+        context['values']['proto'] = updated
+        context['values'][strat_expression] = updated
 
     return old_value
