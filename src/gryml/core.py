@@ -164,7 +164,7 @@ class Gryml:
                     self.context_values.update(nested_gryml.context_values)
 
             if process:
-                tags = self.extract_tags(rd, 0)
+                tags = self.extract_tags(rd)
 
                 deep_merge(values, before_values)
                 before_values.update(values)
@@ -193,24 +193,15 @@ class Gryml:
 
             return self.values
 
-    @staticmethod
-    def process_file(path, rd, prd, starting_pos):
-        for it in prd:
-            ending_pos = rd.tell()
-            output = StringIO()
-            rd.seek(starting_pos)
-            output.write(rd.read(ending_pos - starting_pos))
-            output.seek(0)
-            yield path, output, it, starting_pos
-            starting_pos = ending_pos
-
     def iterate_path(self, path: Path):
 
         if path == '-':
             input_rd = StringIO(sys.stdin.read())
+            tags = self.extract_tags(input_rd)
+            input_rd.seek(0)
             prd = self.yaml.load_all(input_rd)
-            for it in self.process_file(path, input_rd, prd, 0):
-                yield it
+            for rd in prd:
+                yield path, rd, tags
             return
 
         path = Path(path)
@@ -220,17 +211,17 @@ class Gryml:
 
         if path.is_file():
             with open(path) as rd:
-                stating_pos = rd.tell()
+                tags = self.extract_tags(rd)
+                rd.seek(0)
                 prd = self.yaml.load_all(rd)
-                for it in self.process_file(path, rd, prd, stating_pos):
-                    yield it
+                for rd in prd:
+                    yield path, rd, tags
 
         elif path.is_dir():
             for sub_dir in path.iterdir():
-                for sub_path, output, it, stating_pos in self.iterate_path(sub_dir):
-                    yield sub_path, output, it, stating_pos
+                yield from self.iterate_path(sub_dir)
 
-    def extract_tags(self, body, offset):
+    def extract_tags(self, body):
         result_comments = {}
         for i, line in enumerate(body):
             matches = self.gryml_line_mask.search(line)
@@ -238,10 +229,11 @@ class Gryml:
                 line_start = matches.group(1) is not None
                 matches = [it.groupdict() for it in self.gryml_mask.finditer(line[matches.regs[0][0]:]) if it.lastgroup]
                 if matches:
-                    line = i + 1 + offset
+                    line = i + 1
                     for it in matches:
                         it.update(line_start=line_start, line=line)
                     result_comments[line] = matches
+
         return result_comments
 
     def apply_strategy(self, name, old_value, strat_expression, value_expression, context):
@@ -450,8 +442,7 @@ class Gryml:
         if values is None:
             values = self.values
 
-        for path, body, definition, offset in self.iterate_path(Path(definition_file)):
-            tags = self.extract_tags(body, offset)
+        for path, definition, tags in self.iterate_path(Path(definition_file)):
             yield self.process(definition, dict(tags=tags, values=values, path=path))
 
     def process_sources(self):
@@ -474,8 +465,7 @@ class Gryml:
                 if source_path != '-':
                     source_path = self.path.parent.resolve() / source_path
 
-                for sub_path, output, it, offset in self.iterate_path(source_path):
-                    sub_tags = self.extract_tags(output, offset)
+                for sub_path, it, sub_tags in self.iterate_path(source_path):
 
                     result = self.process(it, dict(
                         tags=sub_tags,
